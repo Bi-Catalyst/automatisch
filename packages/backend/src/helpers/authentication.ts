@@ -12,7 +12,16 @@ const isAuthenticated = rule()(async (_parent, _args, req) => {
     const { userId } = jwt.verify(token, appConfig.appSecretKey) as {
       userId: string;
     };
-    req.currentUser = await User.query().findById(userId).throwIfNotFound();
+    req.currentUser = await User.query()
+      .findById(userId)
+      .leftJoinRelated({
+        role: true,
+        permissions: true,
+      })
+      .withGraphFetched({
+        role: true,
+        permissions: true,
+      });
 
     return true;
   } catch (error) {
@@ -25,13 +34,15 @@ const authentication = shield(
     Query: {
       '*': isAuthenticated,
       getAutomatischInfo: allow,
+      listSamlAuthProviders: allow,
       healthcheck: allow,
+      getConfig: allow,
     },
     Mutation: {
       '*': isAuthenticated,
-      login: allow,
-      createUser: allow,
+      registerUser: allow,
       forgotPassword: allow,
+      login: allow,
       resetPassword: allow,
     },
   },

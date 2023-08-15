@@ -2,7 +2,7 @@ import defineTrigger from '../../../../helpers/define-trigger';
 import updatedFiles from './updated-files';
 
 export default defineTrigger({
-  name: 'Updated Files',
+  name: 'Updated files',
   key: 'updatedFiles',
   pollInterval: 15,
   description:
@@ -32,6 +32,7 @@ export default defineTrigger({
       key: 'folderId',
       type: 'dropdown' as const,
       required: false,
+      dependsOn: ['parameters.driveId'],
       description:
         'Check a specific folder for updated files. Please note: files located in subfolders of the folder you choose here will NOT trigger this flow. Defaults to the top-level folder if none is picked.',
       source: {
@@ -41,6 +42,10 @@ export default defineTrigger({
           {
             name: 'key',
             value: 'listFolders',
+          },
+          {
+            name: 'parameters.driveId',
+            value: '{parameters.driveId}',
           },
         ],
       },

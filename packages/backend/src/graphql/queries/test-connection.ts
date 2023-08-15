@@ -1,5 +1,6 @@
 import Context from '../../types/express/context';
 import App from '../../models/app';
+import Connection from '../../models/connection';
 import globalVariable from '../../helpers/global-variable';
 
 type Params = {
@@ -12,8 +13,13 @@ const testConnection = async (
   params: Params,
   context: Context
 ) => {
-  let connection = await context.currentUser
-    .$relatedQuery('connections')
+  const conditions = context.currentUser.can('update', 'Connection');
+  const userConnections = context.currentUser.$relatedQuery('connections');
+  const allConnections = Connection.query();
+  const connectionBaseQuery = conditions.isCreator ? userConnections : allConnections;
+
+  let connection = await connectionBaseQuery
+    .clone()
     .findOne({
       id: params.id,
     })

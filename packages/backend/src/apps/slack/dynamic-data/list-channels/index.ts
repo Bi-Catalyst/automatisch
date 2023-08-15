@@ -36,7 +36,7 @@ export default {
     do {
       const response: TResponse = await $.http.get('/conversations.list', {
         params: {
-          types: 'public_channel,private_channel,im',
+          types: 'public_channel,private_channel',
           cursor: nextCursor,
           limit: 1000,
         }

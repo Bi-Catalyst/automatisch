@@ -5,15 +5,18 @@ export default defineTrigger({
   name: 'Catch raw webhook',
   key: 'catchRawWebhook',
   type: 'webhook',
+  showWebhookUrl: true,
   description: 'Triggers when the webhook receives a request.',
 
   async testRun($) {
-    if (!isEmpty($.lastExecutionStep?.dataOut)) {
+    const lastExecutionStep = await $.getLastExecutionStep();
+
+    if (!isEmpty(lastExecutionStep?.dataOut)) {
       $.pushTriggerItem({
-        raw: $.lastExecutionStep.dataOut,
+        raw: lastExecutionStep.dataOut,
         meta: {
           internalId: '',
-        }
+        },
       });
     }
   },

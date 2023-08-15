@@ -1,23 +1,29 @@
-import { QueryContext, ModelOptions } from 'objection';
 import bcrypt from 'bcrypt';
-import crypto from 'crypto';
 import { DateTime } from 'luxon';
+import crypto from 'node:crypto';
+import { ModelOptions, QueryContext } from 'objection';
+
 import appConfig from '../config/app';
+import { hasValidLicense } from '../helpers/license.ee';
+import userAbility from '../helpers/user-ability';
 import Base from './base';
-import ExtendedQueryBuilder from './query-builder';
 import Connection from './connection';
-import Flow from './flow';
-import Step from './step';
 import Execution from './execution';
-import UsageData from './usage-data.ee';
+import Flow from './flow';
+import Identity from './identity.ee';
+import Permission from './permission';
+import ExtendedQueryBuilder from './query-builder';
+import Role from './role';
+import Step from './step';
 import Subscription from './subscription.ee';
+import UsageData from './usage-data.ee';
 
 class User extends Base {
   id!: string;
   fullName!: string;
   email!: string;
+  roleId: string;
   password!: string;
-  role: string;
   resetPasswordToken: string;
   resetPasswordTokenSentAt: string;
   trialExpiryDate: string;
@@ -29,19 +35,28 @@ class User extends Base {
   currentUsageData?: UsageData;
   subscriptions?: Subscription[];
   currentSubscription?: Subscription;
+  role: Role;
+  permissions: Permission[];
+  identities: Identity[];
 
   static tableName = 'users';
 
   static jsonSchema = {
     type: 'object',
-    required: ['fullName', 'email', 'password'],
+    required: ['fullName', 'email'],
 
     properties: {
       id: { type: 'string', format: 'uuid' },
       fullName: { type: 'string', minLength: 1 },
       email: { type: 'string', format: 'email', minLength: 1, maxLength: 255 },
-      password: { type: 'string', minLength: 1, maxLength: 255 },
-      role: { type: 'string', enum: ['admin', 'user'] },
+      password: { type: 'string' },
+      resetPasswordToken: { type: 'string' },
+      resetPasswordTokenSentAt: { type: 'string' },
+      trialExpiryDate: { type: 'string' },
+      roleId: { type: 'string', format: 'uuid' },
+      deletedAt: { type: 'string' },
+      createdAt: { type: 'string' },
+      updatedAt: { type: 'string' },
     },
   };
 
@@ -102,7 +117,7 @@ class User extends Base {
         to: 'users.id',
       },
       filter(builder: ExtendedQueryBuilder<UsageData>) {
-        builder.orderBy('created_at', 'desc').first();
+        builder.orderBy('created_at', 'desc').limit(1).first();
       },
     },
     subscriptions: {
@@ -121,7 +136,31 @@ class User extends Base {
         to: 'users.id',
       },
       filter(builder: ExtendedQueryBuilder<Subscription>) {
-        builder.orderBy('created_at', 'desc').first();
+        builder.orderBy('created_at', 'desc').limit(1).first();
+      },
+    },
+    role: {
+      relation: Base.HasOneRelation,
+      modelClass: Role,
+      join: {
+        from: 'roles.id',
+        to: 'users.role_id',
+      },
+    },
+    permissions: {
+      relation: Base.HasManyRelation,
+      modelClass: Permission,
+      join: {
+        from: 'users.role_id',
+        to: 'permissions.role_id',
+      },
+    },
+    identities: {
+      relation: Base.HasManyRelation,
+      modelClass: Identity,
+      join: {
+        from: 'identities.user_id',
+        to: 'users.id',
       },
     },
   });
@@ -158,7 +197,9 @@ class User extends Base {
   }
 
   async generateHash() {
-    this.password = await bcrypt.hash(this.password, 10);
+    if (this.password) {
+      this.password = await bcrypt.hash(this.password, 10);
+    }
   }
 
   async startTrialPeriod() {
@@ -232,9 +273,7 @@ class User extends Base {
   async $beforeUpdate(opt: ModelOptions, queryContext: QueryContext) {
     await super.$beforeUpdate(opt, queryContext);
 
-    if (this.password) {
-      await this.generateHash();
-    }
+    await this.generateHash();
   }
 
   async $afterInsert(queryContext: QueryContext) {
@@ -247,6 +286,51 @@ class User extends Base {
         nextResetAt: DateTime.now().plus({ days: 30 }).toISODate(),
       });
     }
+  }
+
+  async $afterFind(): Promise<any> {
+    if (await hasValidLicense()) return this;
+
+    if (Array.isArray(this.permissions)) {
+      this.permissions = this.permissions.filter((permission) => {
+        const restrictedSubjects = [
+          'Role',
+          'SamlAuthProvider',
+          'Config',
+        ];
+
+        return !restrictedSubjects.includes(permission.subject);
+      });
+    }
+
+    return this;
+  }
+
+  get ability(): ReturnType<typeof userAbility> {
+    return userAbility(this);
+  }
+
+  can(action: string, subject: string) {
+    const can = this.ability.can(action, subject);
+
+    if (!can) throw new Error('Not authorized!');
+
+    const relevantRule = this.ability.relevantRuleFor(action, subject);
+
+    const conditions = (relevantRule?.conditions as string[]) || [];
+    const conditionMap: Record<string, true> = Object.fromEntries(
+      conditions.map((condition) => [condition, true])
+    );
+
+    return conditionMap;
+  }
+
+  cannot(action: string, subject: string) {
+    const cannot = this.ability.cannot(action, subject);
+
+    if (cannot) throw new Error('Not authorized!');
+
+    return cannot;
   }
 }
 

@@ -18,6 +18,7 @@ import type { IStep, ISubstep } from '@automatisch/types';
 type TestSubstepProps = {
   substep: ISubstep;
   expanded?: boolean;
+  showWebhookUrl?: boolean;
   onExpand: () => void;
   onCollapse: () => void;
   onChange?: ({ step }: { step: IStep }) => void;
@@ -52,13 +53,17 @@ function TestSubstep(props: TestSubstepProps): React.ReactElement {
     onSubmit,
     onContinue,
     step,
+    showWebhookUrl = false,
   } = props;
 
   const formatMessage = useFormatMessage();
   const editorContext = React.useContext(EditorContext);
   const [executeFlow, { data, error, loading, called, reset }] = useMutation(
     EXECUTE_FLOW,
-    { context: { autoSnackbar: false } }
+    {
+      refetchQueries: ['GetStepWithTestExecutions'],
+      context: { autoSnackbar: false }
+    }
   );
   const response = data?.executeFlow?.data;
 
@@ -116,7 +121,7 @@ function TestSubstep(props: TestSubstepProps): React.ReactElement {
             </Alert>
           )}
 
-          {step.webhookUrl && (
+          {step.webhookUrl && showWebhookUrl && (
             <WebhookUrlInfo webhookUrl={step.webhookUrl} sx={{ mb: 2 }} />
           )}
 

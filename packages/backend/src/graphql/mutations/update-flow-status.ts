@@ -18,6 +18,8 @@ const updateFlowStatus = async (
   params: Params,
   context: Context
 ) => {
+  context.currentUser.can('publish', 'Flow');
+
   let flow = await context.currentUser
     .$relatedQuery('flows')
     .findOne({
@@ -25,13 +27,11 @@ const updateFlowStatus = async (
     })
     .throwIfNotFound();
 
-  if (flow.active === params.input.active) {
+  const newActiveValue = params.input.active;
+
+  if (flow.active === newActiveValue) {
     return flow;
   }
-
-  flow = await flow.$query().withGraphFetched('steps').patchAndFetch({
-    active: params.input.active,
-  });
 
   const triggerStep = await flow.getTriggerStep();
   const trigger = await triggerStep.getTriggerCommand();
@@ -49,15 +49,15 @@ const updateFlowStatus = async (
       testRun: false,
     });
 
-    if (flow.active && trigger.registerHook) {
+    if (newActiveValue && trigger.registerHook) {
       await trigger.registerHook($);
-    } else if (!flow.active && trigger.unregisterHook) {
+    } else if (!newActiveValue && trigger.unregisterHook) {
       await trigger.unregisterHook($);
     }
   } else {
-    if (flow.active) {
+    if (newActiveValue) {
       flow = await flow.$query().patchAndFetch({
-        published_at: new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
       });
 
       const jobName = `${JOB_NAME}-${flow.id}`;
@@ -79,6 +79,13 @@ const updateFlowStatus = async (
       await flowQueue.removeRepeatableByKey(job.key);
     }
   }
+
+  flow = await flow
+    .$query()
+    .withGraphFetched('steps')
+    .patchAndFetch({
+      active: newActiveValue,
+    });
 
   return flow;
 };

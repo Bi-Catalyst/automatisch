@@ -8,12 +8,14 @@ import Execution from 'pages/Execution';
 import Flows from 'pages/Flows';
 import Flow from 'pages/Flow';
 import Login from 'pages/Login';
+import LoginCallback from 'pages/LoginCallback';
 import SignUp from 'pages/SignUp/index.ee';
 import ForgotPassword from 'pages/ForgotPassword/index.ee';
 import ResetPassword from 'pages/ResetPassword/index.ee';
 import EditorRoutes from 'pages/Editor/routes';
 import * as URLS from 'config/urls';
 import settingsRoutes from './settingsRoutes';
+import adminSettingsRoutes from './adminSettingsRoutes';
 import Notifications from 'pages/Notifications';
 
 export default (
@@ -84,6 +86,11 @@ export default (
     />
 
     <Route
+      path={URLS.LOGIN_CALLBACK}
+      element={<LoginCallback />}
+    />
+
+    <Route
       path={URLS.SIGNUP}
       element={
         <PublicLayout>
@@ -121,7 +128,9 @@ export default (
 
     <Route path="/" element={<Navigate to={URLS.FLOWS} replace />} />
 
-    <Route path={`${URLS.SETTINGS}`}>{settingsRoutes}</Route>
+    <Route path={URLS.SETTINGS}>{settingsRoutes}</Route>
+
+    <Route path={URLS.ADMIN_SETTINGS}>{adminSettingsRoutes}</Route>
 
     <Route
       element={

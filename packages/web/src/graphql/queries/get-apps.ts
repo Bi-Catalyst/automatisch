@@ -67,6 +67,7 @@ export const GET_APPS = gql`
         name
         key
         type
+        showWebhookUrl
         pollInterval
         description
         substeps {
@@ -85,6 +86,14 @@ export const GET_APPS = gql`
               value
             }
             source {
+              type
+              name
+              arguments {
+                name
+                value
+              }
+            }
+            additionalFields {
               type
               name
               arguments {

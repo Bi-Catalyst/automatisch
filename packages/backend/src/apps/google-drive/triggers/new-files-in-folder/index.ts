@@ -2,7 +2,7 @@ import defineTrigger from '../../../../helpers/define-trigger';
 import newFilesInFolder from './new-files-in-folder';
 
 export default defineTrigger({
-  name: 'New Files in Folder',
+  name: 'New files in folder',
   key: 'newFilesInFolder',
   pollInterval: 15,
   description:
@@ -32,6 +32,7 @@ export default defineTrigger({
       key: 'folderId',
       type: 'dropdown' as const,
       required: false,
+      dependsOn: ['parameters.driveId'],
       description:
         'Check a specific folder for new files. Please note: new files added to subfolders inside the folder you choose here will NOT trigger this flow. Defaults to the top-level folder if none is picked.',
       variables: false,
@@ -42,6 +43,10 @@ export default defineTrigger({
           {
             name: 'key',
             value: 'listFolders',
+          },
+          {
+            name: 'parameters.driveId',
+            value: '{parameters.driveId}',
           },
         ],
       },

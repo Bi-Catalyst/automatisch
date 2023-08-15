@@ -12,7 +12,7 @@ import type {
 
 import { GET_DYNAMIC_DATA } from 'graphql/queries/get-dynamic-data';
 
-const variableRegExp = /({.*?})/g;
+const variableRegExp = /({.*?})/;
 
 function computeArguments(
   args: IFieldDropdownSource['arguments'],

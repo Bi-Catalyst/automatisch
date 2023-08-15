@@ -1,6 +1,7 @@
-import Context from '../../types/express/context';
-import ExecutionStep from '../../models/execution-step';
 import { ref } from 'objection';
+import ExecutionStep from '../../models/execution-step';
+import Step from '../../models/step';
+import Context from '../../types/express/context';
 
 type Params = {
   stepId: string;
@@ -11,13 +12,18 @@ const getStepWithTestExecutions = async (
   params: Params,
   context: Context
 ) => {
-  const step = await context.currentUser
-    .$relatedQuery('steps')
+  const conditions = context.currentUser.can('update', 'Flow');
+  const userSteps = context.currentUser.$relatedQuery('steps');
+  const allSteps = Step.query();
+  const stepBaseQuery = conditions.isCreator ? userSteps : allSteps;
+
+  const step = await stepBaseQuery
+    .clone()
     .findOne({ 'steps.id': params.stepId })
     .throwIfNotFound();
 
-  const previousStepsWithCurrentStep = await context.currentUser
-    .$relatedQuery('steps')
+  const previousStepsWithCurrentStep = await stepBaseQuery
+    .clone()
     .withGraphJoined('executionSteps')
     .where('flow_id', '=', step.flowId)
     .andWhere('position', '<', step.position)

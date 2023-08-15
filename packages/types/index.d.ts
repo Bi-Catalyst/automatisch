@@ -4,7 +4,13 @@ import type { Request } from 'express';
 
 // Type definitions for automatisch
 
-export type IJSONValue = string | number | boolean | IJSONObject | IJSONArray;
+export type IJSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | IJSONObject
+  | IJSONArray;
 export type IJSONArray = Array<IJSONValue>;
 export interface IJSONObject {
   [x: string]: IJSONValue;
@@ -54,7 +60,7 @@ export interface IStep {
   key?: string;
   appKey?: string;
   iconUrl: string;
-  webhookUrl: string;
+  webhookUrl?: string;
   type: 'action' | 'trigger';
   connectionId?: string;
   status: string;
@@ -89,6 +95,30 @@ export interface IUser {
   connections: IConnection[];
   flows: IFlow[];
   steps: IStep[];
+  role: IRole;
+  permissions: IPermission[];
+}
+
+export interface IRole {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  isAdmin: boolean;
+  permissions: IPermission[];
+}
+
+export interface IPermission {
+  id: string;
+  action: string;
+  subject: string;
+  conditions: string[];
+}
+
+export interface IPermissionCatalog {
+  actions: { label: string; key: string; subjects: string[] }[];
+  subjects: { label: string; key: string; }[];
+  conditions: { label: string; key: string; }[];
 }
 
 export interface IFieldDropdown {
@@ -235,14 +265,16 @@ export interface IBaseTrigger {
   name: string;
   key: string;
   type?: 'webhook' | 'polling';
+  showWebhookUrl?: boolean;
   pollInterval?: number;
   description: string;
+  useSingletonWebhook?: boolean;
+  singletonWebhookRefValueParameter?: string;
   getInterval?(parameters: IStep['parameters']): string;
   run?($: IGlobalVariable): Promise<void>;
   testRun?($: IGlobalVariable): Promise<void>;
   registerHook?($: IGlobalVariable): Promise<void>;
   unregisterHook?($: IGlobalVariable): Promise<void>;
-  sort?(item: ITriggerItem, nextItem: ITriggerItem): number;
 }
 
 export interface IRawTrigger extends IBaseTrigger {
@@ -300,7 +332,7 @@ export type IGlobalVariable = {
     set: (args: IJSONObject) => Promise<null>;
     data: IJSONObject;
   };
-  app: IApp;
+  app?: IApp;
   http?: IHttpClient;
   request?: IRequest;
   flow?: {
@@ -325,8 +357,9 @@ export type IGlobalVariable = {
     testRun: boolean;
     exit: () => void;
   };
-  lastExecutionStep?: IExecutionStep;
+  getLastExecutionStep?: () => Promise<IExecutionStep>;
   webhookUrl?: string;
+  singletonWebhookUrl?: string;
   triggerOutput?: ITriggerOutput;
   actionOutput?: IActionOutput;
   pushTriggerItem?: (triggerItem: ITriggerItem) => void;
@@ -338,7 +371,7 @@ export type TPaymentPlan = {
   name: string;
   limit: string;
   productId: string;
-}
+};
 
 export type TSubscription = {
   status: string;
@@ -354,27 +387,41 @@ export type TSubscription = {
     title: string;
     action: BillingCardAction;
   };
-}
+};
 
 type TBillingCardAction = TBillingTextCardAction | TBillingLinkCardAction;
 
 type TBillingTextCardAction = {
   type: 'text';
   text: string;
-}
+};
 
 type TBillingLinkCardAction = {
   type: 'link';
   text: string;
   src: string;
-}
+};
 
 type TInvoice = {
-  id: number
-  amount: number
-  currency: string
-  payout_date: string
-  receipt_url: string
+  id: number;
+  amount: number;
+  currency: string;
+  payout_date: string;
+  receipt_url: string;
+};
+
+type TSamlAuthProvider = {
+  id: string;
+  name: string;
+  certificate: string;
+  signatureAlgorithm: "sha1" | "sha256" | "sha512";
+  issuer: string;
+  entryPoint: string;
+  firstnameAttributeName: string;
+  surnameAttributeName: string;
+  emailAttributeName: string;
+  roleAttributeName: string;
+  defaultRoleId: string;
 }
 
 declare module 'axios' {
@@ -384,6 +431,11 @@ declare module 'axios' {
 
   interface AxiosRequestConfig {
     additionalProperties?: Record<string, unknown>;
+  }
+
+  // ref: https://github.com/axios/axios/issues/5095
+  interface AxiosInstance {
+    create(config?: CreateAxiosDefaults): AxiosInstance;
   }
 }
 

@@ -69,6 +69,15 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Filter',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/filter/actions' },
+            { text: 'Connection', link: '/apps/filter/connection' },
+          ],
+        },
+        {
           text: 'Flickr',
           collapsible: true,
           collapsed: true,
@@ -78,13 +87,22 @@ export default defineConfig({
           ],
         },
         {
-          text: 'Github',
+          text: 'GitHub',
           collapsible: true,
           collapsed: true,
           items: [
             { text: 'Triggers', link: '/apps/github/triggers' },
             { text: 'Actions', link: '/apps/github/actions' },
             { text: 'Connection', link: '/apps/github/connection' },
+          ],
+        },
+        {
+          text: 'GitLab',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/gitlab/triggers' },
+            { text: 'Connection', link: '/apps/gitlab/connection' },
           ],
         },
         {
@@ -111,6 +129,7 @@ export default defineConfig({
           collapsed: true,
           items: [
             { text: 'Triggers', link: '/apps/google-sheets/triggers' },
+            { text: 'Actions', link: '/apps/google-sheets/actions' },
             { text: 'Connection', link: '/apps/google-sheets/connection' },
           ],
         },
@@ -124,6 +143,25 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Mattermost',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/mattermost/actions' },
+            { text: 'Connection', link: '/apps/mattermost/connection' },
+          ],
+        },
+        {
+          text: 'Notion',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/notion/triggers' },
+            { text: 'Actions', link: '/apps/notion/actions' },
+            { text: 'Connection', link: '/apps/notion/connection' },
+          ],
+        },
+        {
           text: 'Ntfy',
           collapsible: true,
           collapsed: true,
@@ -133,12 +171,30 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Odoo',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/odoo/actions' },
+            { text: 'Connection', link: '/apps/odoo/connection' },
+          ],
+        },
+        {
           text: 'OpenAI',
           collapsible: true,
           collapsed: true,
           items: [
             { text: 'Actions', link: '/apps/openai/actions' },
             { text: 'Connection', link: '/apps/openai/connection' },
+          ],
+        },
+        {
+          text: 'PostgreSQL',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/postgresql/actions' },
+            { text: 'Connection', link: '/apps/postgresql/connection' },
           ],
         },
         {
@@ -279,6 +335,15 @@ export default defineConfig({
           items: [
             { text: 'Triggers', link: '/apps/webhooks/triggers' },
             { text: 'Connection', link: '/apps/webhooks/connection' },
+          ],
+        },
+        {
+          text: 'WordPress',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/wordpress/triggers' },
+            { text: 'Connection', link: '/apps/wordpress/connection' },
           ],
         },
       ],
