@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { DateTime } from 'luxon';
-import { useQuery } from '@apollo/client';
 import Stack from '@mui/material/Stack';
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -14,13 +13,15 @@ import type { IApp, IExecutionStep, IStep } from '@automatisch/types';
 import TabPanel from 'components/TabPanel';
 import SearchableJSONViewer from 'components/SearchableJSONViewer';
 import AppIcon from 'components/AppIcon';
-import { GET_APPS } from 'graphql/queries/get-apps';
 import useFormatMessage from 'hooks/useFormatMessage';
+import useApps from 'hooks/useApps';
+
 import {
   AppIconWrapper,
   AppIconStatusIconWrapper,
   Content,
   Header,
+  Metadata,
   Wrapper,
 } from './style';
 
@@ -31,16 +32,36 @@ type ExecutionStepProps = {
   executionStep: IExecutionStep;
 };
 
+function ExecutionStepId(props: Pick<IExecutionStep, 'id'>) {
+  const formatMessage = useFormatMessage();
+
+  const id = (
+    <Typography variant="caption" component="span">
+      {props.id}
+    </Typography>
+  );
+
+  return (
+    <Box sx={{ display: 'flex' }} gridArea="id">
+      <Typography variant="caption" fontWeight="bold">
+        {formatMessage('executionStep.id', { id })}
+      </Typography>
+    </Box>
+  );
+}
+
 function ExecutionStepDate(props: Pick<IExecutionStep, 'createdAt'>) {
   const formatMessage = useFormatMessage();
   const createdAt = DateTime.fromMillis(parseInt(props.createdAt, 10));
   const relativeCreatedAt = createdAt.toRelative();
 
   return (
-    <Tooltip title={createdAt.toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}>
+    <Tooltip
+      title={createdAt.toLocaleString(DateTime.DATETIME_FULL_WITH_SECONDS)}
+    >
       <Typography variant="caption" gutterBottom>
         {formatMessage('executionStep.executedAt', {
-          datetime: relativeCreatedAt
+          datetime: relativeCreatedAt,
         })}
       </Typography>
     </Tooltip>
@@ -59,10 +80,10 @@ export default function ExecutionStep(
   const isTrigger = step.type === 'trigger';
   const isAction = step.type === 'action';
   const formatMessage = useFormatMessage();
-  const { data } = useQuery(GET_APPS, {
-    variables: { onlyWithTriggers: isTrigger, onlyWithActions: isAction },
+  const { apps } = useApps({
+    onlyWithTriggers: isTrigger,
+    onlyWithActions: isAction,
   });
-  const apps: IApp[] = data?.getApps;
   const app = apps?.find((currentApp: IApp) => currentApp.key === step.appKey);
 
   if (!apps) return null;
@@ -74,30 +95,37 @@ export default function ExecutionStep(
   return (
     <Wrapper elevation={1} data-test="execution-step">
       <Header>
-        <Stack direction="row" gap={2}>
+        <Stack direction="row" gap={3}>
           <AppIconWrapper>
-            <AppIcon url={app?.iconUrl} name={app?.name} />
-
             <AppIconStatusIconWrapper>
+              <AppIcon url={app?.iconUrl} name={app?.name} />
+
               {validationStatusIcon}
             </AppIconStatusIconWrapper>
           </AppIconWrapper>
 
-          <Box flex="1">
-            <Typography variant="caption">
-              {isTrigger
-                ? formatMessage('flowStep.triggerType')
-                : formatMessage('flowStep.actionType')}
-            </Typography>
+          <Metadata flex="1">
+            <ExecutionStepId id={executionStep.step.id} />
 
-            <Typography variant="body2">
-              {step.position}. {app?.name}
-            </Typography>
-          </Box>
+            <Box flex="1" gridArea="step">
+              <Typography variant="caption">
+                {isTrigger && formatMessage('flowStep.triggerType')}
+                {isAction && formatMessage('flowStep.actionType')}
+              </Typography>
 
-          <Box alignSelf="flex-end">
-            <ExecutionStepDate createdAt={executionStep.createdAt} />
-          </Box>
+              <Typography variant="body2">
+                {step.position}. {app?.name}
+              </Typography>
+            </Box>
+
+            <Box
+              display="flex"
+              justifyContent={['left', 'right']}
+              gridArea="date"
+            >
+              <ExecutionStepDate createdAt={executionStep.createdAt} />
+            </Box>
+          </Metadata>
         </Stack>
       </Header>
 
@@ -117,7 +145,7 @@ export default function ExecutionStep(
           <SearchableJSONViewer data={executionStep.dataIn} />
         </TabPanel>
 
-        <TabPanel value={activeTabIndex} index={1}>
+        <TabPanel value={activeTabIndex} index={1} data-test="data-out-panel">
           <SearchableJSONViewer data={executionStep.dataOut} />
         </TabPanel>
 

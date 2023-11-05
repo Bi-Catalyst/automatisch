@@ -1,8 +1,8 @@
-import * as React from 'react';
 import { useMutation } from '@apollo/client';
-import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useSnackbar } from 'notistack';
+import IconButton from '@mui/material/IconButton';
+import useEnqueueSnackbar from 'hooks/useEnqueueSnackbar';
+import * as React from 'react';
 
 import ConfirmationDialog from 'components/ConfirmationDialog';
 import { DELETE_USER } from 'graphql/mutations/delete-user.ee';
@@ -20,7 +20,7 @@ export default function DeleteUserButton(props: DeleteUserButtonProps) {
     refetchQueries: ['GetUsers'],
   });
   const formatMessage = useFormatMessage();
-  const { enqueueSnackbar } = useSnackbar();
+  const enqueueSnackbar = useEnqueueSnackbar();
 
   const handleConfirm = React.useCallback(async () => {
     try {
@@ -29,6 +29,9 @@ export default function DeleteUserButton(props: DeleteUserButtonProps) {
       setShowConfirmation(false);
       enqueueSnackbar(formatMessage('deleteUserButton.successfullyDeleted'), {
         variant: 'success',
+        SnackbarProps: {
+          'data-test': 'snackbar-delete-user-success'
+        }
       });
     } catch (error) {
       throw new Error('Failed while deleting!');
@@ -37,7 +40,7 @@ export default function DeleteUserButton(props: DeleteUserButtonProps) {
 
   return (
     <>
-      <IconButton onClick={() => setShowConfirmation(true)} size="small">
+      <IconButton data-test="delete-button" onClick={() => setShowConfirmation(true)} size="small">
         <DeleteIcon />
       </IconButton>
 
@@ -49,6 +52,7 @@ export default function DeleteUserButton(props: DeleteUserButtonProps) {
         onConfirm={handleConfirm}
         cancelButtonChildren={formatMessage('deleteUserButton.cancel')}
         confirmButtionChildren={formatMessage('deleteUserButton.confirm')}
+        data-test="delete-user-modal"
       />
     </>
   );

@@ -3,7 +3,13 @@ import { withHistory } from 'slate-history';
 import { ReactEditor, withReact } from 'slate-react';
 import { IFieldDropdownOption } from '@automatisch/types';
 
-import type { CustomEditor, CustomElement, CustomText, ParagraphElement, VariableElement } from './types';
+import type {
+  CustomEditor,
+  CustomElement,
+  CustomText,
+  ParagraphElement,
+  VariableElement,
+} from './types';
 
 type StepWithVariables = {
   id: string;
@@ -13,7 +19,7 @@ type StepWithVariables = {
     sampleValue: string;
     value: string;
   }[];
-}
+};
 
 type StepsWithVariables = StepWithVariables[];
 
@@ -26,10 +32,7 @@ function isCustomText(value: any): value is CustomText {
   return false;
 }
 
-function getStepPosition(
-  id: string,
-  stepsWithVariables: StepsWithVariables
-) {
+function getStepPosition(id: string, stepsWithVariables: StepsWithVariables) {
   const stepIndex = stepsWithVariables.findIndex((stepWithVariables) => {
     return stepWithVariables.id === id;
   });
@@ -48,29 +51,36 @@ function getVariableStepId(variable: string) {
   return stepId;
 }
 
-function getVariableSampleValue(variable: string, stepsWithVariables: StepsWithVariables) {
+function getVariableSampleValue(
+  variable: string,
+  stepsWithVariables: StepsWithVariables
+) {
   const variableStepId = getVariableStepId(variable);
-  const stepWithVariables = stepsWithVariables.find(({ id }: { id: string }) => id === variableStepId);
+  const stepWithVariables = stepsWithVariables.find(
+    ({ id }: { id: string }) => id === variableStepId
+  );
 
   if (!stepWithVariables) return null;
 
   const variableName = getVariableName(variable);
-  const variableData = stepWithVariables.output.find(({ value }) => variableName === value);
+  const variableData = stepWithVariables.output.find(
+    ({ value }) => variableName === value
+  );
 
   if (!variableData) return null;
 
   return variableData.sampleValue;
 }
 
-function getVariableDetails(variable: string, stepsWithVariables: StepsWithVariables) {
+function getVariableDetails(
+  variable: string,
+  stepsWithVariables: StepsWithVariables
+) {
   const variableName = getVariableName(variable);
   const stepId = getVariableStepId(variableName);
   const stepPosition = getStepPosition(stepId, stepsWithVariables);
   const sampleValue = getVariableSampleValue(variable, stepsWithVariables);
-  const label = variableName.replace(
-    `step.${stepId}.`,
-    `step${stepPosition}.`
-  );
+  const label = variableName.replace(`step.${stepId}.`, `step${stepPosition}.`);
 
   return {
     sampleValue,
@@ -82,19 +92,13 @@ const variableRegExp = /({{.*?}})/;
 const stepIdRegExp = /^step.([\da-zA-Z-]*)/;
 
 export const deserialize = (
-  value: string,
+  value: boolean | string | number,
   options: readonly IFieldDropdownOption[],
   stepsWithVariables: StepsWithVariables
 ): Descendant[] => {
-  if (!value)
-    return [
-      {
-        type: 'paragraph',
-        children: [{ text: '' }],
-      },
-    ];
-
-  const selectedNativeOption = options.find((option) => value === option.value);
+  const selectedNativeOption = options?.find(
+    (option) => value === option.value
+  );
 
   if (selectedNativeOption) {
     return [
@@ -106,40 +110,54 @@ export const deserialize = (
     ];
   }
 
-  return value.split('\n').map((line) => {
-    const nodes = line.split(variableRegExp);
-
-    if (nodes.length > 1) {
-      return {
+  if (value === null || value === undefined || value === '')
+    return [
+      {
         type: 'paragraph',
-        children: nodes.map((node) => {
-          if (node.match(variableRegExp)) {
-            const variableDetails = getVariableDetails(node, stepsWithVariables);
+        children: [{ text: '' }],
+      },
+    ];
+
+  return value
+    .toString()
+    .split('\n')
+    .map((line) => {
+      const nodes = line.split(variableRegExp);
+
+      if (nodes.length > 1) {
+        return {
+          type: 'paragraph',
+          children: nodes.map((node) => {
+            if (node.match(variableRegExp)) {
+              const variableDetails = getVariableDetails(
+                node,
+                stepsWithVariables
+              );
+
+              return {
+                type: 'variable',
+                name: variableDetails.label,
+                sampleValue: variableDetails.sampleValue,
+                value: node,
+                children: [{ text: '' }],
+              };
+            }
 
             return {
-              type: 'variable',
-              name: variableDetails.label,
-              sampleValue: variableDetails.sampleValue,
-              value: node,
-              children: [{ text: '' }],
+              text: node,
             };
-          }
+          }),
+        };
+      }
 
-          return {
-            text: node,
-          };
-        }),
+      return {
+        type: 'paragraph',
+        children: [{ text: line }],
       };
-    }
-
-    return {
-      type: 'paragraph',
-      children: [{ text: line }],
-    };
-  });
+    });
 };
 
-export const serialize = (value: Descendant[]): string => {
+export const serialize = (value: Descendant[]): string | number | null => {
   const serializedNodes = value.map((node) => serializeNode(node));
 
   const hasSingleNode = value.length === 1;
@@ -156,8 +174,12 @@ export const serialize = (value: Descendant[]): string => {
   return serializedValue;
 };
 
-const serializeNode = (node: CustomElement | Descendant): string => {
-  if (isCustomText(node)) return node.value;
+const serializeNode = (
+  node: CustomElement | Descendant
+): string | number | null => {
+  if (isCustomText(node)) {
+    return node.value;
+  }
 
   if (Text.isText(node)) {
     return node.text;
@@ -199,7 +221,10 @@ export const insertVariable = (
   variableData: Record<string, unknown>,
   stepsWithVariables: StepsWithVariables
 ) => {
-  const variableDetails = getVariableDetails(`{{${variableData.value}}}`, stepsWithVariables);
+  const variableDetails = getVariableDetails(
+    `{{${variableData.value}}}`,
+    stepsWithVariables
+  );
 
   const variable: VariableElement = {
     type: 'variable',
@@ -217,15 +242,18 @@ export const insertVariable = (
 export const focusEditor = (editor: CustomEditor) => {
   ReactEditor.focus(editor);
   editor.move();
-}
+};
 
-export const resetEditor = (editor: CustomEditor, options?: { focus: boolean }) => {
+export const resetEditor = (
+  editor: CustomEditor,
+  options?: { focus: boolean }
+) => {
   const focus = options?.focus || false;
 
   editor.removeNodes({
     at: {
       anchor: editor.start([]),
-      focus: editor.end([])
+      focus: editor.end([]),
     },
   });
 
@@ -235,9 +263,12 @@ export const resetEditor = (editor: CustomEditor, options?: { focus: boolean }) 
   if (focus) {
     focusEditor(editor);
   }
-}
+};
 
-export const overrideEditorValue = (editor: CustomEditor, options: { option: IFieldDropdownOption, focus: boolean }) => {
+export const overrideEditorValue = (
+  editor: CustomEditor,
+  options: { option: IFieldDropdownOption; focus: boolean }
+) => {
   const { option, focus } = options;
 
   const variable: ParagraphElement = {
@@ -245,8 +276,8 @@ export const overrideEditorValue = (editor: CustomEditor, options: { option: IFi
     children: [
       {
         value: option.value as string,
-        text: option.label as string
-      }
+        text: option.label as string,
+      },
     ],
   };
 
@@ -254,7 +285,7 @@ export const overrideEditorValue = (editor: CustomEditor, options: { option: IFi
     editor.removeNodes({
       at: {
         anchor: editor.start([]),
-        focus: editor.end([])
+        focus: editor.end([]),
       },
     });
 
@@ -270,9 +301,9 @@ export const createTextNode = (text: string): ParagraphElement => ({
   type: 'paragraph',
   children: [
     {
-      text
-    }
-  ]
+      text,
+    },
+  ],
 });
 
 export const customizeEditor = (editor: CustomEditor): CustomEditor => {

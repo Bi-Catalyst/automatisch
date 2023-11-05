@@ -1,23 +1,23 @@
-import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import Container from '@mui/material/Container';
+import { IRole, IUser } from '@automatisch/types';
+import LoadingButton from '@mui/lab/LoadingButton';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import MuiTextField from '@mui/material/TextField';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { IUser, IRole } from '@automatisch/types';
-import { useSnackbar } from 'notistack';
+import useEnqueueSnackbar from 'hooks/useEnqueueSnackbar';
+import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { CREATE_USER } from 'graphql/mutations/create-user.ee';
-import * as URLS from 'config/urls';
 import Can from 'components/Can';
-import useRoles from 'hooks/useRoles.ee';
-import PageTitle from 'components/PageTitle';
-import Form from 'components/Form';
+import Container from 'components/Container';
 import ControlledAutocomplete from 'components/ControlledAutocomplete';
+import Form from 'components/Form';
+import PageTitle from 'components/PageTitle';
 import TextField from 'components/TextField';
+import * as URLS from 'config/urls';
+import { CREATE_USER } from 'graphql/mutations/create-user.ee';
 import useFormatMessage from 'hooks/useFormatMessage';
+import useRoles from 'hooks/useRoles.ee';
 
 function generateRoleOptions(roles: IRole[]) {
   return roles?.map(({ name: label, id: value }) => ({ label, value }));
@@ -28,7 +28,7 @@ export default function CreateUser(): React.ReactElement {
   const formatMessage = useFormatMessage();
   const [createUser, { loading }] = useMutation(CREATE_USER);
   const { roles, loading: rolesLoading } = useRoles();
-  const { enqueueSnackbar } = useSnackbar();
+  const enqueueSnackbar = useEnqueueSnackbar();
 
   const handleUserCreation = async (userData: Partial<IUser>) => {
     try {
@@ -47,6 +47,10 @@ export default function CreateUser(): React.ReactElement {
 
       enqueueSnackbar(formatMessage('createUser.successfullyCreated'), {
         variant: 'success',
+        persist: true,
+        SnackbarProps: {
+          'data-test': 'snackbar-create-user-success',
+        }
       });
 
       navigate(URLS.USERS);
@@ -57,7 +61,7 @@ export default function CreateUser(): React.ReactElement {
 
   return (
     <Container sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-      <Grid container item xs={12} sm={9} md={8} lg={6}>
+      <Grid container item xs={12} sm={10} md={9}>
         <Grid item xs={12} sx={{ mb: [2, 5] }}>
           <PageTitle>{formatMessage('createUserPage.title')}</PageTitle>
         </Grid>
@@ -69,6 +73,7 @@ export default function CreateUser(): React.ReactElement {
                 required={true}
                 name="fullName"
                 label={formatMessage('userForm.fullName')}
+                data-test="full-name-input"
                 fullWidth
               />
 
@@ -76,6 +81,7 @@ export default function CreateUser(): React.ReactElement {
                 required={true}
                 name="email"
                 label={formatMessage('userForm.email')}
+                data-test="email-input"
                 fullWidth
               />
 
@@ -84,6 +90,7 @@ export default function CreateUser(): React.ReactElement {
                 name="password"
                 label={formatMessage('userForm.password')}
                 type="password"
+                data-test="password-input"
                 fullWidth
               />
 
@@ -110,6 +117,7 @@ export default function CreateUser(): React.ReactElement {
                 color="primary"
                 sx={{ boxShadow: 2 }}
                 loading={loading}
+                data-test="create-button"
               >
                 {formatMessage('createUser.submit')}
               </LoadingButton>

@@ -74,7 +74,12 @@ export default function AddNewAppConnection(
   }, []);
 
   return (
-    <Dialog open={true} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={true}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      data-test="add-app-connection-dialog">
       <DialogTitle>{formatMessage('apps.addNewAppConnection')}</DialogTitle>
 
       <Box px={3}>
@@ -101,7 +106,9 @@ export default function AddNewAppConnection(
               </InputAdornment>
             }
             label={formatMessage('apps.searchApp')}
-            data-test="search-for-app-text-field"
+            inputProps={{
+              'data-test': 'search-for-app-text-field',
+            }}
           />
         </FormControl>
       </Box>
@@ -109,7 +116,10 @@ export default function AddNewAppConnection(
       <DialogContent>
         <List sx={{ pt: 2, width: '100%' }}>
           {loading && (
-            <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
+            <CircularProgress
+              data-test="search-for-app-loader"
+              sx={{ display: 'block', margin: '20px auto' }}
+            />
           )}
 
           {!loading &&

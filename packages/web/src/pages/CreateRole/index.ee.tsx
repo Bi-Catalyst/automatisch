@@ -1,13 +1,13 @@
 import { useMutation } from '@apollo/client';
 import LoadingButton from '@mui/lab/LoadingButton';
-import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import PermissionCatalogField from 'components/PermissionCatalogField/index.ee';
+import useEnqueueSnackbar from 'hooks/useEnqueueSnackbar';
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import PermissionCatalogField from 'components/PermissionCatalogField/index.ee';
-import { useSnackbar } from 'notistack';
 
+import Container from 'components/Container';
 import Form from 'components/Form';
 import PageTitle from 'components/PageTitle';
 import TextField from 'components/TextField';
@@ -23,7 +23,7 @@ export default function CreateRole(): React.ReactElement {
   const navigate = useNavigate();
   const formatMessage = useFormatMessage();
   const [createRole, { loading }] = useMutation(CREATE_ROLE);
-  const { enqueueSnackbar } = useSnackbar();
+  const enqueueSnackbar = useEnqueueSnackbar();
 
   const handleRoleCreation = async (
     roleData: Partial<RoleWithComputedPermissions>
@@ -43,6 +43,9 @@ export default function CreateRole(): React.ReactElement {
 
       enqueueSnackbar(formatMessage('createRole.successfullyCreated'), {
         variant: 'success',
+        SnackbarProps: {
+          'data-test': 'snackbar-create-role-success'
+        }
       });
 
       navigate(URLS.ROLES);
@@ -53,7 +56,7 @@ export default function CreateRole(): React.ReactElement {
 
   return (
     <Container sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-      <Grid container item xs={12} sm={9} md={8} lg={6}>
+      <Grid container item xs={12} sm={10} md={9}>
         <Grid item xs={12} sx={{ mb: [2, 5] }}>
           <PageTitle>{formatMessage('createRolePage.title')}</PageTitle>
         </Grid>
@@ -74,7 +77,10 @@ export default function CreateRole(): React.ReactElement {
                 fullWidth
               />
 
-              <PermissionCatalogField name="computedPermissions" />
+              <PermissionCatalogField
+                name="computedPermissions"
+                defaultChecked={true}
+              />
 
               <LoadingButton
                 type="submit"

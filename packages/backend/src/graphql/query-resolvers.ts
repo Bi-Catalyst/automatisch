@@ -16,11 +16,13 @@ import getExecutions from './queries/get-executions';
 import getFlow from './queries/get-flow';
 import getFlows from './queries/get-flows';
 import getInvoices from './queries/get-invoices.ee';
+import getNotifications from './queries/get-notifications';
 import getPaddleInfo from './queries/get-paddle-info.ee';
 import getPaymentPlans from './queries/get-payment-plans.ee';
 import getPermissionCatalog from './queries/get-permission-catalog.ee';
 import getRole from './queries/get-role.ee';
 import getRoles from './queries/get-roles.ee';
+import getSamlAuthProviderRoleMappings from './queries/get-saml-auth-provider-role-mappings.ee';
 import getSamlAuthProvider from './queries/get-saml-auth-provider.ee';
 import getStepWithTestExecutions from './queries/get-step-with-test-executions';
 import getSubscriptionStatus from './queries/get-subscription-status.ee';
@@ -50,12 +52,14 @@ const queryResolvers = {
   getFlow,
   getFlows,
   getInvoices,
+  getNotifications,
   getPaddleInfo,
   getPaymentPlans,
   getPermissionCatalog,
   getRole,
   getRoles,
   getSamlAuthProvider,
+  getSamlAuthProviderRoleMappings,
   getStepWithTestExecutions,
   getSubscriptionStatus,
   getTrialStatus,

@@ -51,8 +51,8 @@ export interface IExecution {
   testRun: boolean;
   status: 'success' | 'failure';
   executionSteps: IExecutionStep[];
-  updatedAt: string;
-  createdAt: string;
+  updatedAt: string | Date;
+  createdAt: string | Date;
 }
 
 export interface IStep {
@@ -83,8 +83,8 @@ export interface IFlow {
   active: boolean;
   status: 'paused' | 'published' | 'draft';
   steps: IStep[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
   remoteWebhookId: string;
   lastInternalId: () => Promise<string>;
 }
@@ -99,6 +99,9 @@ export interface IUser {
   steps: IStep[];
   role: IRole;
   permissions: IPermission[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  trialExpiryDate: string | Date;
 }
 
 export interface IRole {
@@ -119,8 +122,14 @@ export interface IPermission {
 
 export interface IPermissionCatalog {
   actions: { label: string; key: string; subjects: string[] }[];
-  subjects: { label: string; key: string; }[];
-  conditions: { label: string; key: string; }[];
+  subjects: { label: string; key: string }[];
+  conditions: { label: string; key: string }[];
+}
+
+export interface IConfig {
+  id: string;
+  key: string;
+  value: IJSONObject;
 }
 
 export interface IFieldDropdown {
@@ -418,7 +427,7 @@ type TSamlAuthProvider = {
   id: string;
   name: string;
   certificate: string;
-  signatureAlgorithm: "sha1" | "sha256" | "sha512";
+  signatureAlgorithm: 'sha1' | 'sha256' | 'sha512';
   issuer: string;
   entryPoint: string;
   firstnameAttributeName: string;
@@ -426,7 +435,16 @@ type TSamlAuthProvider = {
   emailAttributeName: string;
   roleAttributeName: string;
   defaultRoleId: string;
-}
+  active: boolean;
+  loginUrl: string;
+};
+
+type TSamlAuthProviderRole = {
+  id: string;
+  samlAuthProviderId: string;
+  roleId: string;
+  remoteRoleName: string;
+};
 
 type AppConfig = {
   id: string;
@@ -436,7 +454,7 @@ type AppConfig = {
   canCustomConnect: boolean;
   shared: boolean;
   disabled: boolean;
-}
+};
 
 type AppAuthClient = {
   id: string;
@@ -444,7 +462,14 @@ type AppAuthClient = {
   appConfigId: string;
   authDefaults: string;
   formattedAuthDefaults: IJSONObject;
-}
+};
+
+type Notification = {
+  name: string;
+  createdAt: string;
+  documentationUrl: string;
+  description: string;
+};
 
 declare module 'axios' {
   interface AxiosResponse {

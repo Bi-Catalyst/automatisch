@@ -1,13 +1,13 @@
 import { useMutation } from '@apollo/client';
 import LoadingButton from '@mui/lab/LoadingButton';
-import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
-import Stack from '@mui/material/Stack';
 import Skeleton from '@mui/material/Skeleton';
+import Stack from '@mui/material/Stack';
+import useEnqueueSnackbar from 'hooks/useEnqueueSnackbar';
 import * as React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
 
+import Container from 'components/Container';
 import Form from 'components/Form';
 import PageTitle from 'components/PageTitle';
 import PermissionCatalogField from 'components/PermissionCatalogField/index.ee';
@@ -32,7 +32,7 @@ export default function EditRole(): React.ReactElement {
   const navigate = useNavigate();
   const { roleId } = useParams<EditRoleParams>();
   const { role, loading: roleLoading } = useRole(roleId);
-  const { enqueueSnackbar } = useSnackbar();
+  const enqueueSnackbar = useEnqueueSnackbar();
 
   const handleRoleUpdate = async (
     roleData: Partial<RoleWithComputedPermissions>
@@ -53,6 +53,9 @@ export default function EditRole(): React.ReactElement {
 
       enqueueSnackbar(formatMessage('editRole.successfullyUpdated'), {
         variant: 'success',
+        SnackbarProps: {
+          'data-test': 'snackbar-edit-role-success'
+        }
       });
 
       navigate(URLS.ROLES);
@@ -65,7 +68,7 @@ export default function EditRole(): React.ReactElement {
 
   return (
     <Container sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-      <Grid container item xs={12} sm={9} md={8} lg={6}>
+      <Grid container item xs={12} sm={10} md={9}>
         <Grid item xs={12} sx={{ mb: [2, 5] }}>
           <PageTitle>{formatMessage('editRolePage.title')}</PageTitle>
         </Grid>

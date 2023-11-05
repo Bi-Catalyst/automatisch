@@ -4,7 +4,6 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 
-import * as URLS from 'config/urls';
 import useSamlAuthProviders from 'hooks/useSamlAuthProviders.ee';
 import useFormatMessage from 'hooks/useFormatMessage';
 
@@ -24,11 +23,11 @@ function SsoProviders() {
             <Button
               key={provider.id}
               component="a"
-              href={URLS.SSO_LOGIN(provider.issuer)}
+              href={provider.loginUrl}
               variant="outlined"
             >
               {formatMessage('ssoProviders.loginWithProvider', {
-                providerName: provider.name
+                providerName: provider.name,
               })}
             </Button>
           ))}

@@ -115,6 +115,15 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Google Calendar',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/google-calendar/triggers' },
+            { text: 'Connection', link: '/apps/google-calendar/connection' },
+          ],
+        },
+        {
           text: 'Google Drive',
           collapsible: true,
           collapsed: true,
@@ -152,12 +161,40 @@ export default defineConfig({
           ],
         },
         {
+          text: 'HubSpot',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/hubspot/actions' },
+            { text: 'Connection', link: '/apps/hubspot/connection' },
+          ],
+        },
+        {
+          text: 'Invoice Ninja',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/invoice-ninja/triggers' },
+            { text: 'Actions', link: '/apps/invoice-ninja/actions' },
+            { text: 'Connection', link: '/apps/invoice-ninja/connection' },
+          ],
+        },
+        {
           text: 'Mattermost',
           collapsible: true,
           collapsed: true,
           items: [
             { text: 'Actions', link: '/apps/mattermost/actions' },
             { text: 'Connection', link: '/apps/mattermost/connection' },
+          ],
+        },
+        {
+          text: 'Miro',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/miro/actions' },
+            { text: 'Connection', link: '/apps/miro/connection' },
           ],
         },
         {
@@ -198,12 +235,40 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Pipedrive',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/pipedrive/triggers' },
+            { text: 'Actions', link: '/apps/pipedrive/actions' },
+            { text: 'Connection', link: '/apps/pipedrive/connection' },
+          ],
+        },
+        {
+          text: 'Placetel',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/placetel/triggers' },
+            { text: 'Connection', link: '/apps/placetel/connection' },
+          ],
+        },
+        {
           text: 'PostgreSQL',
           collapsible: true,
           collapsed: true,
           items: [
             { text: 'Actions', link: '/apps/postgresql/actions' },
             { text: 'Connection', link: '/apps/postgresql/connection' },
+          ],
+        },
+        {
+          text: 'Pushover',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/pushover/actions' },
+            { text: 'Connection', link: '/apps/pushover/connection' },
           ],
         },
         {
@@ -309,6 +374,15 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Trello',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/trello/actions' },
+            { text: 'Connection', link: '/apps/trello/connection' },
+          ],
+        },
+        {
           text: 'Twilio',
           collapsible: true,
           collapsed: true,
@@ -354,6 +428,21 @@ export default defineConfig({
             { text: 'Triggers', link: '/apps/wordpress/triggers' },
             { text: 'Connection', link: '/apps/wordpress/connection' },
           ],
+        },
+        {
+          text: 'Youtube',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/youtube/triggers' },
+            { text: 'Connection', link: '/apps/youtube/connection' },
+          ],
+        },
+        {
+          text: 'Zendesk',
+          collapsible: true,
+          collapsed: true,
+          items: [{ text: 'Connection', link: '/apps/zendesk/connection' }],
         },
       ],
       '/': [

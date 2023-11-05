@@ -1,25 +1,25 @@
-import * as React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import Container from '@mui/material/Container';
+import { IRole, IUser } from '@automatisch/types';
+import LoadingButton from '@mui/lab/LoadingButton';
 import Grid from '@mui/material/Grid';
+import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import MuiTextField from '@mui/material/TextField';
-import Skeleton from '@mui/material/Skeleton';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { IUser, IRole } from '@automatisch/types';
-import { useSnackbar } from 'notistack';
+import useEnqueueSnackbar from 'hooks/useEnqueueSnackbar';
+import * as React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { UPDATE_USER } from 'graphql/mutations/update-user.ee';
 import Can from 'components/Can';
-import * as URLS from 'config/urls';
-import useUser from 'hooks/useUser';
-import useRoles from 'hooks/useRoles.ee';
-import PageTitle from 'components/PageTitle';
-import Form from 'components/Form';
+import Container from 'components/Container';
 import ControlledAutocomplete from 'components/ControlledAutocomplete';
+import Form from 'components/Form';
+import PageTitle from 'components/PageTitle';
 import TextField from 'components/TextField';
+import * as URLS from 'config/urls';
+import { UPDATE_USER } from 'graphql/mutations/update-user.ee';
 import useFormatMessage from 'hooks/useFormatMessage';
+import useRoles from 'hooks/useRoles.ee';
+import useUser from 'hooks/useUser';
 
 type EditUserParams = {
   userId: string;
@@ -35,7 +35,7 @@ export default function EditUser(): React.ReactElement {
   const { userId } = useParams<EditUserParams>();
   const { user, loading: userLoading } = useUser(userId);
   const { roles, loading: rolesLoading } = useRoles();
-  const { enqueueSnackbar } = useSnackbar();
+  const enqueueSnackbar = useEnqueueSnackbar();
   const navigate = useNavigate();
 
   const handleUserUpdate = async (userDataToUpdate: Partial<IUser>) => {
@@ -55,6 +55,10 @@ export default function EditUser(): React.ReactElement {
 
       enqueueSnackbar(formatMessage('editUser.successfullyUpdated'), {
         variant: 'success',
+        SnackbarProps: {
+          'data-test': 'snackbar-edit-user-success',
+          persist: true
+        }
       });
 
       navigate(URLS.USERS);
@@ -65,7 +69,7 @@ export default function EditUser(): React.ReactElement {
 
   return (
     <Container sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
-      <Grid container item xs={12} sm={9} md={8} lg={6}>
+      <Grid container item xs={12} sm={10} md={9}>
         <Grid item xs={12} sx={{ mb: [2, 5] }}>
           <PageTitle>{formatMessage('editUserPage.title')}</PageTitle>
         </Grid>
@@ -87,6 +91,7 @@ export default function EditUser(): React.ReactElement {
                   required={true}
                   name="fullName"
                   label={formatMessage('userForm.fullName')}
+                  data-test="full-name-input"
                   fullWidth
                 />
 
@@ -94,6 +99,7 @@ export default function EditUser(): React.ReactElement {
                   required={true}
                   name="email"
                   label={formatMessage('userForm.email')}
+                  data-test="email-input"
                   fullWidth
                 />
 
@@ -120,6 +126,7 @@ export default function EditUser(): React.ReactElement {
                   color="primary"
                   sx={{ boxShadow: 2 }}
                   loading={loading}
+                  data-test="update-button"
                 >
                   {formatMessage('editUser.submit')}
                 </LoadingButton>
