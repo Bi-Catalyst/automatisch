@@ -23,10 +23,10 @@ jobs:
         with:
           context: ./docker
           push: false
-          tags: docker.pkg.github.com/${{ steps.lower-repo.outputs.repository }}/automatisch:latest
+          tags: docker.pkg.github.com/${{ steps.lower-repo.outputs.repository }}/automatisch:${{ github.ref_name }}
 
       - name: Login to GitHub Packages
         run: docker login docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push Docker image
-        run: docker push docker.pkg.github.com/${{ steps.lower-repo.outputs.repository }}/automatisch:latest
+        run: docker push docker.pkg.github.com/${{ steps.lower-repo.outputs.repository }}/automatisch:${{ github.ref_name }}
