@@ -2,18 +2,33 @@ import appConfig from '../../src/config/app';
 import logger from '../../src/helpers/logger';
 import client from './client';
 import User from '../../src/models/user';
+import Role from '../../src/models/role';
 import '../../src/config/orm';
+
+async function fetchAdminRole() {
+  const role = await Role
+    .query()
+    .where({
+      key: 'admin'
+    })
+    .limit(1)
+    .first();
+
+  return role;
+}
 
 export async function createUser(
   email = 'user@automatisch.io',
   password = 'sample'
 ) {
   const UNIQUE_VIOLATION_CODE = '23505';
+
+  const role = await fetchAdminRole();
   const userParams = {
     email,
     password,
     fullName: 'Initial admin',
-    role: 'admin',
+    roleId: role.id,
   };
 
   try {

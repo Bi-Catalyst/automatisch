@@ -1,20 +1,20 @@
-import * as React from 'react';
-import type { ContainerProps } from '@mui/material/Container';
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import MuiAppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import MuiAppBar from '@mui/material/AppBar';
+import type { ContainerProps } from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
+import Toolbar from '@mui/material/Toolbar';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import * as React from 'react';
 
-import * as URLS from 'config/urls';
 import AccountDropdownMenu from 'components/AccountDropdownMenu';
-import TrialStatusBadge from 'components/TrialStatusBadge/index.ee';
 import Container from 'components/Container';
-import { FormattedMessage } from 'react-intl';
+import Logo from 'components/Logo/index';
+import TrialStatusBadge from 'components/TrialStatusBadge/index.ee';
+import * as URLS from 'config/urls';
+
 import { Link } from './style';
 
 type AppBarProps = {
@@ -46,7 +46,7 @@ export default function AppBar(props: AppBarProps): React.ReactElement {
   };
 
   return (
-    <MuiAppBar>
+    <MuiAppBar data-test="app-bar">
       <Container maxWidth={maxWidth} disableGutters>
         <Toolbar>
           <IconButton
@@ -56,15 +56,14 @@ export default function AppBar(props: AppBarProps): React.ReactElement {
             aria-label="open drawer"
             onClick={drawerOpen ? onDrawerClose : onDrawerOpen}
             sx={{ mr: 2 }}
+            data-test="drawer-menu-button"
           >
             {drawerOpen && matchSmallScreens ? <MenuOpenIcon /> : <MenuIcon />}
           </IconButton>
 
-          <div style={{ flexGrow: 1 }}>
+          <div style={{ flexGrow: 1, display: 'flex' }}>
             <Link to={URLS.DASHBOARD}>
-              <Typography variant="h6" component="h1" noWrap>
-                <FormattedMessage id="brandText" />
-              </Typography>
+              <Logo />
             </Link>
           </div>
 

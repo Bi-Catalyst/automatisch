@@ -5,6 +5,9 @@ type Query {
     onlyWithActions: Boolean
   ): [App]
   getApp(key: String!): App
+  getAppConfig(key: String!): AppConfig
+  getAppAuthClient(id: String!): AppAuthClient
+  getAppAuthClients(appKey: String!, active: Boolean): [AppAuthClient]
   getConnectedApps(name: String): [App]
   testConnection(id: String!): Connection
   getFlow(id: String!): Flow
@@ -17,7 +20,11 @@ type Query {
   ): FlowConnection
   getStepWithTestExecutions(stepId: String!): [Step]
   getExecution(executionId: String!): Execution
-  getExecutions(limit: Int!, offset: Int!): ExecutionConnection
+  getExecutions(
+    limit: Int!
+    offset: Int!
+    filters: ExecutionFiltersInput
+  ): ExecutionConnection
   getExecutionSteps(
     executionId: String!
     limit: Int!
@@ -33,38 +40,64 @@ type Query {
     key: String!
     parameters: JSONObject
   ): [SubstepArgument]
-  getCurrentUser: User
-  getPaymentPlans: [PaymentPlan]
-  getPaddleInfo: GetPaddleInfo
-  getBillingAndUsage: GetBillingAndUsage
-  getInvoices: [Invoice]
   getAutomatischInfo: GetAutomatischInfo
-  getTrialStatus: GetTrialStatus
+  getBillingAndUsage: GetBillingAndUsage
+  getCurrentUser: User
+  getConfig(keys: [String]): JSONObject
+  getInvoices: [Invoice]
+  getPaddleInfo: GetPaddleInfo
+  getPaymentPlans: [PaymentPlan]
+  getPermissionCatalog: PermissionCatalog
+  getRole(id: String!): Role
+  getRoles: [Role]
+  getNotifications: [Notification]
+  getSamlAuthProvider: SamlAuthProvider
+  getSamlAuthProviderRoleMappings(id: String!): [SamlAuthProvidersRoleMapping]
   getSubscriptionStatus: GetSubscriptionStatus
+  getTrialStatus: GetTrialStatus
+  getUser(id: String!): User
+  getUsers(limit: Int!, offset: Int!): UserConnection
   healthcheck: AppHealth
+  listSamlAuthProviders: [ListSamlAuthProvider]
 }
 
 type Mutation {
+  createAppConfig(input: CreateAppConfigInput): AppConfig
+  createAppAuthClient(input: CreateAppAuthClientInput): AppAuthClient
   createConnection(input: CreateConnectionInput): Connection
-  generateAuthUrl(input: GenerateAuthUrlInput): AuthLink
-  updateConnection(input: UpdateConnectionInput): Connection
-  resetConnection(input: ResetConnectionInput): Connection
-  verifyConnection(input: VerifyConnectionInput): Connection
-  deleteConnection(input: DeleteConnectionInput): Boolean
   createFlow(input: CreateFlowInput): Flow
+  createRole(input: CreateRoleInput): Role
+  createStep(input: CreateStepInput): Step
+  createUser(input: CreateUserInput): User
+  deleteConnection(input: DeleteConnectionInput): Boolean
+  deleteCurrentUser: Boolean
+  deleteFlow(input: DeleteFlowInput): Boolean
+  deleteRole(input: DeleteRoleInput): Boolean
+  deleteStep(input: DeleteStepInput): Step
+  deleteUser(input: DeleteUserInput): Boolean
+  duplicateFlow(input: DuplicateFlowInput): Flow
+  executeFlow(input: ExecuteFlowInput): executeFlowType
+  forgotPassword(input: ForgotPasswordInput): Boolean
+  generateAuthUrl(input: GenerateAuthUrlInput): AuthLink
+  login(input: LoginInput): Auth
+  registerUser(input: RegisterUserInput): User
+  resetConnection(input: ResetConnectionInput): Connection
+  resetPassword(input: ResetPasswordInput): Boolean
+  updateAppAuthClient(input: UpdateAppAuthClientInput): AppAuthClient
+  updateAppConfig(input: UpdateAppConfigInput): AppConfig
+  updateConfig(input: JSONObject): JSONObject
+  updateConnection(input: UpdateConnectionInput): Connection
+  updateCurrentUser(input: UpdateCurrentUserInput): User
   updateFlow(input: UpdateFlowInput): Flow
   updateFlowStatus(input: UpdateFlowStatusInput): Flow
-  executeFlow(input: ExecuteFlowInput): executeFlowType
-  deleteFlow(input: DeleteFlowInput): Boolean
-  createStep(input: CreateStepInput): Step
+  updateRole(input: UpdateRoleInput): Role
   updateStep(input: UpdateStepInput): Step
-  deleteStep(input: DeleteStepInput): Step
-  createUser(input: CreateUserInput): User
-  deleteUser: Boolean
   updateUser(input: UpdateUserInput): User
-  forgotPassword(input: ForgotPasswordInput): Boolean
-  resetPassword(input: ResetPasswordInput): Boolean
-  login(input: LoginInput): Auth
+  upsertSamlAuthProvider(input: UpsertSamlAuthProviderInput): SamlAuthProvider
+  upsertSamlAuthProvidersRoleMappings(
+    input: UpsertSamlAuthProvidersRoleMappingsInput
+  ): [SamlAuthProvidersRoleMapping]
+  verifyConnection(input: VerifyConnectionInput): Connection
 }
 
 """
@@ -81,6 +114,7 @@ type Trigger {
   name: String
   key: String
   description: String
+  showWebhookUrl: Boolean
   pollInterval: Int
   type: String
   substeps: [Substep]
@@ -141,6 +175,16 @@ type SubstepArgumentAdditionalFieldsArgument {
   value: String
 }
 
+type AppConfig {
+  id: String
+  key: String
+  allowCustomConnection: Boolean
+  canConnect: Boolean
+  canCustomConnect: Boolean
+  shared: Boolean
+  disabled: Boolean
+}
+
 type App {
   name: String
   key: String
@@ -160,7 +204,9 @@ type App {
 type AppAuth {
   fields: [Field]
   authenticationSteps: [AuthenticationStep]
+  sharedAuthenticationSteps: [AuthenticationStep]
   reconnectionSteps: [ReconnectionStep]
+  sharedReconnectionSteps: [ReconnectionStep]
 }
 
 enum ArgumentEnumType {
@@ -198,6 +244,8 @@ type AuthLink {
 type Connection {
   id: String
   key: String
+  reconnectable: Boolean
+  appAuthClientId: String
   formattedData: ConnectionData
   verified: Boolean
   app: App
@@ -275,9 +323,42 @@ type Execution {
   flow: Flow
 }
 
+type SamlAuthProvider {
+  id: String
+  name: String
+  certificate: String
+  signatureAlgorithm: String
+  issuer: String
+  entryPoint: String
+  firstnameAttributeName: String
+  surnameAttributeName: String
+  emailAttributeName: String
+  roleAttributeName: String
+  active: Boolean
+  defaultRoleId: String
+}
+
+type SamlAuthProvidersRoleMapping {
+  id: String
+  samlAuthProviderId: String
+  roleId: String
+  remoteRoleName: String
+}
+
+type UserConnection {
+  edges: [UserEdge]
+  pageInfo: PageInfo
+  totalCount: Int
+}
+
+type UserEdge {
+  node: User
+}
+
 input CreateConnectionInput {
   key: String!
-  formattedData: JSONObject!
+  appAuthClientId: String
+  formattedData: JSONObject
 }
 
 input GenerateAuthUrlInput {
@@ -286,7 +367,8 @@ input GenerateAuthUrlInput {
 
 input UpdateConnectionInput {
   id: String!
-  formattedData: JSONObject!
+  formattedData: JSONObject
+  appAuthClientId: String
 }
 
 input ResetConnectionInput {
@@ -295,6 +377,30 @@ input ResetConnectionInput {
 
 input VerifyConnectionInput {
   id: String!
+}
+
+input UpsertSamlAuthProviderInput {
+  name: String!
+  certificate: String!
+  signatureAlgorithm: String!
+  issuer: String!
+  entryPoint: String!
+  firstnameAttributeName: String!
+  surnameAttributeName: String!
+  emailAttributeName: String!
+  roleAttributeName: String!
+  defaultRoleId: String!
+  active: Boolean!
+}
+
+input UpsertSamlAuthProvidersRoleMappingsInput {
+  samlAuthProviderId: String!
+  samlAuthProvidersRoleMappings: [SamlAuthProviderRoleMappingInput]
+}
+
+input SamlAuthProviderRoleMappingInput {
+  roleId: String!
+  remoteRoleName: String!
 }
 
 input DeleteConnectionInput {
@@ -321,6 +427,10 @@ input ExecuteFlowInput {
 }
 
 input DeleteFlowInput {
+  id: String!
+}
+
+input DuplicateFlowInput {
   id: String!
 }
 
@@ -354,9 +464,31 @@ input CreateUserInput {
   fullName: String!
   email: String!
   password: String!
+  role: UserRoleInput!
+}
+
+input UserRoleInput {
+  id: String
 }
 
 input UpdateUserInput {
+  id: String!
+  fullName: String
+  email: String
+  role: UserRoleInput
+}
+
+input DeleteUserInput {
+  id: String!
+}
+
+input RegisterUserInput {
+  fullName: String!
+  email: String!
+  password: String!
+}
+
+input UpdateCurrentUserInput {
   email: String
   password: String
   fullName: String
@@ -374,6 +506,29 @@ input ResetPasswordInput {
 input LoginInput {
   email: String!
   password: String!
+}
+
+input PermissionInput {
+  action: String!
+  subject: String!
+  conditions: [String]
+}
+
+input CreateRoleInput {
+  name: String!
+  description: String
+  permissions: [PermissionInput]
+}
+
+input UpdateRoleInput {
+  id: String!
+  name: String!
+  description: String
+  permissions: [PermissionInput]
+}
+
+input DeleteRoleInput {
+  id: String!
 }
 
 """
@@ -447,9 +602,19 @@ type User {
   id: String
   fullName: String
   email: String
-  role: String
+  role: Role
+  permissions: [Permission]
   createdAt: String
   updatedAt: String
+}
+
+type Role {
+  id: String
+  name: String
+  key: String
+  description: String
+  isAdmin: Boolean
+  permissions: [Permission]
 }
 
 type PageInfo {
@@ -481,6 +646,14 @@ type AppHealth {
 
 type GetAutomatischInfo {
   isCloud: Boolean
+  license: License
+}
+
+type License {
+  id: String
+  name: String
+  expireAt: String
+  verified: Boolean
 }
 
 type GetTrialStatus {
@@ -546,6 +719,95 @@ type PaymentPlan {
   limit: String
   price: String
   productId: String
+}
+
+type ListSamlAuthProvider {
+  id: String
+  name: String
+  issuer: String
+  loginUrl: String
+}
+
+type Permission {
+  id: String
+  action: String
+  subject: String
+  conditions: [String]
+}
+
+type PermissionCatalog {
+  actions: [Action]
+  subjects: [Subject]
+  conditions: [Condition]
+}
+
+type Action {
+  label: String
+  key: String
+  subjects: [String]
+}
+
+type Condition {
+  key: String
+  label: String
+}
+
+type Subject {
+  label: String
+  key: String
+}
+
+input CreateAppConfigInput {
+  key: String
+  allowCustomConnection: Boolean
+  shared: Boolean
+  disabled: Boolean
+}
+
+input UpdateAppConfigInput {
+  id: String
+  allowCustomConnection: Boolean
+  shared: Boolean
+  disabled: Boolean
+}
+
+type AppAuthClient {
+  id: String
+  appConfigId: String
+  name: String
+  active: Boolean
+}
+
+input CreateAppAuthClientInput {
+  appConfigId: String
+  name: String
+  formattedAuthDefaults: JSONObject
+  active: Boolean
+}
+
+input UpdateAppAuthClientInput {
+  id: String
+  name: String
+  formattedAuthDefaults: JSONObject
+  active: Boolean
+}
+
+type Notification {
+  name: String
+  createdAt: String
+  documentationUrl: String
+  description: String
+}
+
+input ExecutionCreatedAtFilterInput {
+  from: String
+  to: String
+}
+
+input ExecutionFiltersInput {
+  flowId: String
+  createdAt: ExecutionCreatedAtFilterInput
+  status: String
 }
 
 schema {

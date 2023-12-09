@@ -1,12 +1,14 @@
-import axios, { AxiosRequestConfig } from 'axios';
-export { AxiosInstance as IHttpClient } from 'axios';
 import { IHttpClientParams } from '@automatisch/types';
-import { URL } from 'url';
+import { InternalAxiosRequestConfig } from 'axios';
+import { URL } from 'node:url';
+export { AxiosInstance as IHttpClient } from 'axios';
+
 import HttpError from '../../errors/http';
+import axios from '../axios-with-proxy';
 
 const removeBaseUrlForAbsoluteUrls = (
-  requestConfig: AxiosRequestConfig
-): AxiosRequestConfig => {
+  requestConfig: InternalAxiosRequestConfig
+): InternalAxiosRequestConfig => {
   try {
     const url = new URL(requestConfig.url);
     requestConfig.baseURL = url.origin;
@@ -28,12 +30,21 @@ export default function createHttpClient({
   });
 
   instance.interceptors.request.use(
-    (requestConfig: AxiosRequestConfig): AxiosRequestConfig => {
+    (requestConfig: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
       const newRequestConfig = removeBaseUrlForAbsoluteUrls(requestConfig);
 
-      return beforeRequest.reduce((newConfig, beforeRequestFunc) => {
+      const result = beforeRequest.reduce((newConfig, beforeRequestFunc) => {
         return beforeRequestFunc($, newConfig);
       }, newRequestConfig);
+
+      /**
+       * axios seems to want InternalAxiosRequestConfig returned not AxioRequestConfig
+       * anymore even though requests do require AxiosRequestConfig.
+       *
+       * Since both interfaces are very similar (InternalAxiosRequestConfig
+       * extends AxiosRequestConfig), we can utilize an assertion below
+       **/
+      return result as InternalAxiosRequestConfig;
     }
   );
 

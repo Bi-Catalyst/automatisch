@@ -4,7 +4,13 @@ import type { Request } from 'express';
 
 // Type definitions for automatisch
 
-export type IJSONValue = string | number | boolean | IJSONObject | IJSONArray;
+export type IJSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | IJSONObject
+  | IJSONArray;
 export type IJSONArray = Array<IJSONValue>;
 export interface IJSONObject {
   [x: string]: IJSONValue;
@@ -21,6 +27,8 @@ export interface IConnection {
   flowCount?: number;
   appData?: IApp;
   createdAt: string;
+  reconnectable?: boolean;
+  appAuthClientId?: string;
 }
 
 export interface IExecutionStep {
@@ -43,8 +51,8 @@ export interface IExecution {
   testRun: boolean;
   status: 'success' | 'failure';
   executionSteps: IExecutionStep[];
-  updatedAt: string;
-  createdAt: string;
+  updatedAt: string | Date;
+  createdAt: string | Date;
 }
 
 export interface IStep {
@@ -54,7 +62,7 @@ export interface IStep {
   key?: string;
   appKey?: string;
   iconUrl: string;
-  webhookUrl: string;
+  webhookUrl?: string;
   type: 'action' | 'trigger';
   connectionId?: string;
   status: string;
@@ -75,8 +83,8 @@ export interface IFlow {
   active: boolean;
   status: 'paused' | 'published' | 'draft';
   steps: IStep[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
   remoteWebhookId: string;
   lastInternalId: () => Promise<string>;
 }
@@ -89,6 +97,39 @@ export interface IUser {
   connections: IConnection[];
   flows: IFlow[];
   steps: IStep[];
+  role: IRole;
+  permissions: IPermission[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  trialExpiryDate: string | Date;
+}
+
+export interface IRole {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  isAdmin: boolean;
+  permissions: IPermission[];
+}
+
+export interface IPermission {
+  id: string;
+  action: string;
+  subject: string;
+  conditions: string[];
+}
+
+export interface IPermissionCatalog {
+  actions: { label: string; key: string; subjects: string[] }[];
+  subjects: { label: string; key: string }[];
+  conditions: { label: string; key: string }[];
+}
+
+export interface IConfig {
+  id: string;
+  key: string;
+  value: IJSONObject;
 }
 
 export interface IFieldDropdown {
@@ -217,6 +258,8 @@ export interface IAuth {
   fields?: IField[];
   authenticationSteps?: IAuthenticationStep[];
   reconnectionSteps?: IAuthenticationStep[];
+  sharedAuthenticationSteps?: IAuthenticationStep[];
+  sharedReconnectionSteps?: IAuthenticationStep[];
 }
 
 export interface ITriggerOutput {
@@ -235,14 +278,16 @@ export interface IBaseTrigger {
   name: string;
   key: string;
   type?: 'webhook' | 'polling';
+  showWebhookUrl?: boolean;
   pollInterval?: number;
   description: string;
+  useSingletonWebhook?: boolean;
+  singletonWebhookRefValueParameter?: string;
   getInterval?(parameters: IStep['parameters']): string;
   run?($: IGlobalVariable): Promise<void>;
   testRun?($: IGlobalVariable): Promise<void>;
   registerHook?($: IGlobalVariable): Promise<void>;
   unregisterHook?($: IGlobalVariable): Promise<void>;
-  sort?(item: ITriggerItem, nextItem: ITriggerItem): number;
 }
 
 export interface IRawTrigger extends IBaseTrigger {
@@ -300,7 +345,7 @@ export type IGlobalVariable = {
     set: (args: IJSONObject) => Promise<null>;
     data: IJSONObject;
   };
-  app: IApp;
+  app?: IApp;
   http?: IHttpClient;
   request?: IRequest;
   flow?: {
@@ -325,8 +370,9 @@ export type IGlobalVariable = {
     testRun: boolean;
     exit: () => void;
   };
-  lastExecutionStep?: IExecutionStep;
+  getLastExecutionStep?: () => Promise<IExecutionStep>;
   webhookUrl?: string;
+  singletonWebhookUrl?: string;
   triggerOutput?: ITriggerOutput;
   actionOutput?: IActionOutput;
   pushTriggerItem?: (triggerItem: ITriggerItem) => void;
@@ -338,7 +384,7 @@ export type TPaymentPlan = {
   name: string;
   limit: string;
   productId: string;
-}
+};
 
 export type TSubscription = {
   status: string;
@@ -354,28 +400,77 @@ export type TSubscription = {
     title: string;
     action: BillingCardAction;
   };
-}
+};
 
 type TBillingCardAction = TBillingTextCardAction | TBillingLinkCardAction;
 
 type TBillingTextCardAction = {
   type: 'text';
   text: string;
-}
+};
 
 type TBillingLinkCardAction = {
   type: 'link';
   text: string;
   src: string;
-}
+};
 
 type TInvoice = {
-  id: number
-  amount: number
-  currency: string
-  payout_date: string
-  receipt_url: string
-}
+  id: number;
+  amount: number;
+  currency: string;
+  payout_date: string;
+  receipt_url: string;
+};
+
+type TSamlAuthProvider = {
+  id: string;
+  name: string;
+  certificate: string;
+  signatureAlgorithm: 'sha1' | 'sha256' | 'sha512';
+  issuer: string;
+  entryPoint: string;
+  firstnameAttributeName: string;
+  surnameAttributeName: string;
+  emailAttributeName: string;
+  roleAttributeName: string;
+  defaultRoleId: string;
+  active: boolean;
+  loginUrl: string;
+};
+
+type TSamlAuthProviderRole = {
+  id: string;
+  samlAuthProviderId: string;
+  roleId: string;
+  remoteRoleName: string;
+};
+
+type AppConfig = {
+  id: string;
+  key: string;
+  allowCustomConnection: boolean;
+  canConnect: boolean;
+  canCustomConnect: boolean;
+  shared: boolean;
+  disabled: boolean;
+};
+
+type AppAuthClient = {
+  id: string;
+  name: string;
+  appConfigId: string;
+  authDefaults: string;
+  formattedAuthDefaults: IJSONObject;
+  active: boolean;
+};
+
+type Notification = {
+  name: string;
+  createdAt: string;
+  documentationUrl: string;
+  description: string;
+};
 
 declare module 'axios' {
   interface AxiosResponse {
@@ -384,6 +479,11 @@ declare module 'axios' {
 
   interface AxiosRequestConfig {
     additionalProperties?: Record<string, unknown>;
+  }
+
+  // ref: https://github.com/axios/axios/issues/5095
+  interface AxiosInstance {
+    create(config?: CreateAxiosDefaults): AxiosInstance;
   }
 }
 

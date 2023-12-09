@@ -14,6 +14,7 @@ type TextFieldProps = {
   name: string;
   clickToCopy?: boolean;
   readOnly?: boolean;
+  'data-test'?: string;
 } & MuiTextFieldProps;
 
 const createCopyAdornment = (
@@ -38,12 +39,13 @@ export default function TextField(props: TextFieldProps): React.ReactElement {
     required,
     name,
     defaultValue,
-    shouldUnregister = true,
+    shouldUnregister = false,
     clickToCopy = false,
     readOnly = false,
     disabled = false,
     onBlur,
     onChange,
+    'data-test': dataTest,
     ...textFieldProps
   } = props;
 
@@ -65,6 +67,7 @@ export default function TextField(props: TextFieldProps): React.ReactElement {
         <MuiTextField
           {...textFieldProps}
           {...field}
+          required={required}
           disabled={disabled}
           onChange={(...args) => {
             controllerOnChange(...args);
@@ -81,6 +84,9 @@ export default function TextField(props: TextFieldProps): React.ReactElement {
           InputProps={{
             readOnly,
             endAdornment: clickToCopy ? createCopyAdornment(inputRef) : null,
+          }}
+          inputProps={{
+            'data-test': dataTest,
           }}
         />
       )}

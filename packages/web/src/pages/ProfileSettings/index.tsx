@@ -1,29 +1,29 @@
-import * as React from 'react';
 import { useMutation } from '@apollo/client';
+import { yupResolver } from '@hookform/resolvers/yup';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import { useSnackbar } from 'notistack';
-import { yupResolver } from '@hookform/resolvers/yup';
+import useEnqueueSnackbar from 'hooks/useEnqueueSnackbar';
+import * as React from 'react';
 import * as yup from 'yup';
 
-import PageTitle from 'components/PageTitle';
 import Container from 'components/Container';
-import Form from 'components/Form';
-import TextField from 'components/TextField';
 import DeleteAccountDialog from 'components/DeleteAccountDialog/index.ee';
-import { UPDATE_USER } from 'graphql/mutations/update-user';
-import useFormatMessage from 'hooks/useFormatMessage';
+import Form from 'components/Form';
+import PageTitle from 'components/PageTitle';
+import TextField from 'components/TextField';
+import { UPDATE_CURRENT_USER } from 'graphql/mutations/update-current-user';
 import useCurrentUser from 'hooks/useCurrentUser';
+import useFormatMessage from 'hooks/useFormatMessage';
 
 type TMutationInput = {
   fullName: string;
   email: string;
   password?: string;
-}
+};
 
 const validationSchema = yup
   .object({
@@ -43,11 +43,12 @@ const StyledForm = styled(Form)`
 `;
 
 function ProfileSettings() {
-  const [showDeleteAccountConfirmation, setShowDeleteAccountConfirmation] = React.useState(false);
-  const { enqueueSnackbar } = useSnackbar();
+  const [showDeleteAccountConfirmation, setShowDeleteAccountConfirmation] =
+    React.useState(false);
+  const enqueueSnackbar = useEnqueueSnackbar();
   const currentUser = useCurrentUser();
   const formatMessage = useFormatMessage();
-  const [updateUser] = useMutation(UPDATE_USER);
+  const [updateCurrentUser] = useMutation(UPDATE_CURRENT_USER);
 
   const handleProfileSettingsUpdate = async (data: any) => {
     const { fullName, password, email } = data;
@@ -55,18 +56,18 @@ function ProfileSettings() {
     const mutationInput: TMutationInput = {
       fullName,
       email,
-    }
+    };
 
     if (password) {
       mutationInput.password = password;
     }
 
-    await updateUser({
+    await updateCurrentUser({
       variables: {
         input: mutationInput,
       },
       optimisticResponse: {
-        updateUser: {
+        updateCurrentUser: {
           __typename: 'User',
           id: currentUser.id,
           fullName,
@@ -77,9 +78,11 @@ function ProfileSettings() {
 
     enqueueSnackbar(formatMessage('profileSettings.updatedProfile'), {
       variant: 'success',
+      SnackbarProps: {
+        'data-test': 'snackbar-update-profile-settings-success'
+      }
     });
   };
-
 
   return (
     <Container sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
@@ -89,8 +92,12 @@ function ProfileSettings() {
         </Grid>
 
         <Grid item xs={12} justifyContent="flex-end">
-        <StyledForm
-            defaultValues={{ ...currentUser, password: '', confirmPassword: '' }}
+          <StyledForm
+            defaultValues={{
+              ...currentUser,
+              password: '',
+              confirmPassword: '',
+            }}
             onSubmit={handleProfileSettingsUpdate}
             resolver={yupResolver(validationSchema)}
             mode="onChange"
@@ -109,7 +116,7 @@ function ProfileSettings() {
                   fullWidth
                   name="fullName"
                   label={formatMessage('profileSettings.fullName')}
-                  margin='dense'
+                  margin="dense"
                   error={touchedFields.fullName && !!errors?.fullName}
                   helperText={errors?.fullName?.message || ' '}
                 />
@@ -118,7 +125,7 @@ function ProfileSettings() {
                   fullWidth
                   name="email"
                   label={formatMessage('profileSettings.email')}
-                  margin='dense'
+                  margin="dense"
                   error={touchedFields.email && !!errors?.email}
                   helperText={errors?.email?.message || ' '}
                 />
@@ -127,7 +134,7 @@ function ProfileSettings() {
                   fullWidth
                   name="password"
                   label={formatMessage('profileSettings.newPassword')}
-                  margin='dense'
+                  margin="dense"
                   type="password"
                   error={touchedFields.password && !!errors?.password}
                   helperText={
@@ -139,7 +146,7 @@ function ProfileSettings() {
                   fullWidth
                   name="confirmPassword"
                   label={formatMessage('profileSettings.confirmNewPassword')}
-                  margin='dense'
+                  margin="dense"
                   type="password"
                   error={
                     touchedFields.confirmPassword && !!errors?.confirmPassword
@@ -163,9 +170,11 @@ function ProfileSettings() {
           />
         </Grid>
 
-        <Grid item xs={12} justifyContent="flex-end" sx={{pt: 5 }}>
+        <Grid item xs={12} justifyContent="flex-end" sx={{ pt: 5 }}>
           <Alert variant="outlined" severity="error" sx={{ fontWeight: 500 }}>
-            <AlertTitle sx={{ fontWeight: 700 }}>{formatMessage('profileSettings.deleteMyAccount')}</AlertTitle>
+            <AlertTitle sx={{ fontWeight: 700 }}>
+              {formatMessage('profileSettings.deleteMyAccount')}
+            </AlertTitle>
 
             <Typography variant="body1" gutterBottom>
               {formatMessage('profileSettings.deleteAccountSubtitle')}

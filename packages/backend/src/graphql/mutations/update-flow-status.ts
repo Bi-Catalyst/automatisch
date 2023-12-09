@@ -1,3 +1,4 @@
+import Flow from '../../models/flow';
 import Context from '../../types/express/context';
 import flowQueue from '../../queues/flow';
 import { REMOVE_AFTER_30_DAYS_OR_150_JOBS, REMOVE_AFTER_7_DAYS_OR_50_JOBS } from '../../helpers/remove-job-configuration';
@@ -18,20 +19,24 @@ const updateFlowStatus = async (
   params: Params,
   context: Context
 ) => {
-  let flow = await context.currentUser
-    .$relatedQuery('flows')
+  const conditions = context.currentUser.can('publish', 'Flow');
+  const isCreator = conditions.isCreator;
+  const allFlows = Flow.query();
+  const userFlows = context.currentUser.$relatedQuery('flows');
+  const baseQuery = isCreator ? userFlows : allFlows;
+
+  let flow = await baseQuery
+    .clone()
     .findOne({
       id: params.input.id,
     })
     .throwIfNotFound();
 
-  if (flow.active === params.input.active) {
+  const newActiveValue = params.input.active;
+
+  if (flow.active === newActiveValue) {
     return flow;
   }
-
-  flow = await flow.$query().withGraphFetched('steps').patchAndFetch({
-    active: params.input.active,
-  });
 
   const triggerStep = await flow.getTriggerStep();
   const trigger = await triggerStep.getTriggerCommand();
@@ -49,15 +54,15 @@ const updateFlowStatus = async (
       testRun: false,
     });
 
-    if (flow.active && trigger.registerHook) {
+    if (newActiveValue && trigger.registerHook) {
       await trigger.registerHook($);
-    } else if (!flow.active && trigger.unregisterHook) {
+    } else if (!newActiveValue && trigger.unregisterHook) {
       await trigger.unregisterHook($);
     }
   } else {
-    if (flow.active) {
+    if (newActiveValue) {
       flow = await flow.$query().patchAndFetch({
-        published_at: new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
       });
 
       const jobName = `${JOB_NAME}-${flow.id}`;
@@ -79,6 +84,13 @@ const updateFlowStatus = async (
       await flowQueue.removeRepeatableByKey(job.key);
     }
   }
+
+  flow = await flow
+    .$query()
+    .withGraphFetched('steps')
+    .patchAndFetch({
+      active: newActiveValue,
+    });
 
   return flow;
 };

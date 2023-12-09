@@ -1,4 +1,5 @@
 import App from '../../models/app';
+import Connection from '../../models/connection';
 import Context from '../../types/express/context';
 
 type Params = {
@@ -6,12 +7,22 @@ type Params = {
 };
 
 const getApp = async (_parent: unknown, params: Params, context: Context) => {
+  const conditions = context.currentUser.can('read', 'Connection');
+
+  const userConnections = context.currentUser.$relatedQuery('connections');
+  const allConnections = Connection.query();
+  const connectionBaseQuery = conditions.isCreator ? userConnections : allConnections;
+
   const app = await App.findOneByKey(params.key);
 
   if (context.currentUser) {
-    const connections = await context.currentUser
-      .$relatedQuery('connections')
+    const connections = await connectionBaseQuery
+      .clone()
       .select('connections.*')
+      .withGraphFetched({
+        appConfig: true,
+        appAuthClient: true
+      })
       .fullOuterJoinRelated('steps')
       .where({
         'connections.key': params.key,

@@ -18,6 +18,7 @@ export const GET_APPS = gql`
       authDocUrl
       primaryColor
       connectionCount
+      flowCount
       supportsConnections
       auth {
         fields {
@@ -49,7 +50,33 @@ export const GET_APPS = gql`
             }
           }
         }
+        sharedAuthenticationSteps {
+          type
+          name
+          arguments {
+            name
+            value
+            type
+            properties {
+              name
+              value
+            }
+          }
+        }
         reconnectionSteps {
+          type
+          name
+          arguments {
+            name
+            value
+            type
+            properties {
+              name
+              value
+            }
+          }
+        }
+        sharedReconnectionSteps {
           type
           name
           arguments {
@@ -67,6 +94,7 @@ export const GET_APPS = gql`
         name
         key
         type
+        showWebhookUrl
         pollInterval
         description
         substeps {
@@ -90,6 +118,44 @@ export const GET_APPS = gql`
               arguments {
                 name
                 value
+              }
+            }
+            additionalFields {
+              type
+              name
+              arguments {
+                name
+                value
+              }
+            }
+            fields {
+              label
+              key
+              type
+              required
+              description
+              variables
+              value
+              dependsOn
+              options {
+                label
+                value
+              }
+              source {
+                type
+                name
+                arguments {
+                  name
+                  value
+                }
+              }
+              additionalFields {
+                type
+                name
+                arguments {
+                  name
+                  value
+                }
               }
             }
           }

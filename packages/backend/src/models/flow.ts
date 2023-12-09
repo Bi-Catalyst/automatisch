@@ -18,9 +18,11 @@ class Flow extends Base {
   active: boolean;
   status: 'paused' | 'published' | 'draft';
   steps: Step[];
-  published_at: string;
+  triggerStep: Step;
+  publishedAt: string;
   remoteWebhookId: string;
   executions?: Execution[];
+  lastExecution?: Execution;
   user?: User;
 
   static tableName = 'flows';
@@ -35,6 +37,10 @@ class Flow extends Base {
       userId: { type: 'string', format: 'uuid' },
       remoteWebhookId: { type: 'string' },
       active: { type: 'boolean' },
+      publishedAt: { type: 'string' },
+      deletedAt: { type: 'string' },
+      createdAt: { type: 'string' },
+      updatedAt: { type: 'string' },
     },
   };
 
@@ -50,12 +56,37 @@ class Flow extends Base {
         builder.orderBy('position', 'asc');
       },
     },
+    triggerStep: {
+      relation: Base.HasOneRelation,
+      modelClass: Step,
+      join: {
+        from: 'flows.id',
+        to: 'steps.flow_id',
+      },
+      filter(builder: ExtendedQueryBuilder<Step>) {
+        builder
+          .where('type', 'trigger')
+          .limit(1)
+          .first();
+      },
+    },
     executions: {
       relation: Base.HasManyRelation,
       modelClass: Execution,
       join: {
         from: 'flows.id',
         to: 'executions.flow_id',
+      },
+    },
+    lastExecution: {
+      relation: Base.HasOneRelation,
+      modelClass: Execution,
+      join: {
+        from: 'flows.id',
+        to: 'executions.flow_id',
+      },
+      filter(builder: ExtendedQueryBuilder<Execution>) {
+        builder.orderBy('created_at', 'desc').limit(1).first();
       },
     },
     user: {
@@ -89,9 +120,7 @@ class Flow extends Base {
   }
 
   async lastInternalId() {
-    const lastExecution = await this.$relatedQuery('executions')
-      .orderBy('created_at', 'desc')
-      .first();
+    const lastExecution = await this.$relatedQuery('lastExecution');
 
     return lastExecution ? (lastExecution as Execution).internalId : null;
   }

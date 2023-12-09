@@ -1,6 +1,7 @@
 import { IDynamicFields, IJSONObject } from '@automatisch/types';
 import Context from '../../types/express/context';
 import App from '../../models/app';
+import Step from '../../models/step';
 import globalVariable from '../../helpers/global-variable';
 
 type Params = {
@@ -14,8 +15,13 @@ const getDynamicFields = async (
   params: Params,
   context: Context
 ) => {
-  const step = await context.currentUser
-    .$relatedQuery('steps')
+  const conditions = context.currentUser.can('update', 'Flow');
+  const userSteps = context.currentUser.$relatedQuery('steps');
+  const allSteps = Step.query();
+  const stepBaseQuery = conditions.isCreator ? userSteps : allSteps;
+
+  const step = await stepBaseQuery
+    .clone()
     .withGraphFetched({
       connection: true,
       flow: true,
@@ -26,7 +32,7 @@ const getDynamicFields = async (
 
   const connection = step.connection;
 
-  if (!connection || !step.appKey) return null;
+  if (!step.appKey) return null;
 
   const app = await App.findOneByKey(step.appKey);
   const $ = await globalVariable({ connection, app, flow: step.flow, step });

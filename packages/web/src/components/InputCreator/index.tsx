@@ -8,6 +8,7 @@ import useDynamicData from 'hooks/useDynamicData';
 import PowerInput from 'components/PowerInput';
 import TextField from 'components/TextField';
 import ControlledAutocomplete from 'components/ControlledAutocomplete';
+import ControlledCustomAutocomplete from 'components/ControlledCustomAutocomplete';
 import DynamicField from 'components/DynamicField';
 
 type InputCreatorProps = {
@@ -54,10 +55,9 @@ export default function InputCreator(
   } = schema;
 
   const { data, loading } = useDynamicData(stepId, schema);
-  const {
-    data: additionalFields,
-    loading: additionalFieldsLoading
-  } = useDynamicFields(stepId, schema);
+
+  const { data: additionalFields, loading: additionalFieldsLoading } =
+    useDynamicFields(stepId, schema);
   const computedName = namePrefix ? `${namePrefix}.${name}` : name;
 
   if (type === 'dynamic') {
@@ -72,6 +72,7 @@ export default function InputCreator(
         disabled={disabled}
         fields={schema.fields}
         shouldUnregister={shouldUnregister}
+        stepId={stepId}
       />
     );
   }
@@ -81,26 +82,50 @@ export default function InputCreator(
 
     return (
       <React.Fragment>
-        <ControlledAutocomplete
-          key={computedName}
-          name={computedName}
-          dependsOn={schema.dependsOn}
-          fullWidth
-          disablePortal
-          disableClearable={required}
-          options={preparedOptions}
-          renderInput={(params) => <MuiTextField {...params} label={label} />}
-          defaultValue={value as string}
-          description={description}
-          loading={loading}
-          disabled={disabled}
-          showOptionValue={showOptionValue}
-          shouldUnregister={shouldUnregister}
-        />
+        {!schema.variables && (
+          <ControlledAutocomplete
+            key={computedName}
+            name={computedName}
+            dependsOn={schema.dependsOn}
+            fullWidth
+            disablePortal
+            disableClearable={required}
+            options={preparedOptions}
+            renderInput={(params) => <MuiTextField {...params} label={label} />}
+            defaultValue={value as string}
+            description={description}
+            loading={loading}
+            disabled={disabled}
+            showOptionValue={showOptionValue}
+            shouldUnregister={shouldUnregister}
+          />
+        )}
 
-        {(additionalFieldsLoading && !additionalFields?.length) && <div>
-          <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
-        </div>}
+        {schema.variables && (
+          <ControlledCustomAutocomplete
+            key={computedName}
+            name={computedName}
+            dependsOn={schema.dependsOn}
+            label={label}
+            fullWidth
+            disablePortal
+            disableClearable={required}
+            options={preparedOptions}
+            renderInput={(params) => <MuiTextField {...params} label={label} />}
+            defaultValue={value as string}
+            description={description}
+            loading={loading}
+            disabled={disabled}
+            showOptionValue={showOptionValue}
+            shouldUnregister={shouldUnregister}
+          />
+        )}
+
+        {additionalFieldsLoading && !additionalFields?.length && (
+          <div>
+            <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
+          </div>
+        )}
 
         {additionalFields?.map((field) => (
           <InputCreator
@@ -131,9 +156,13 @@ export default function InputCreator(
             shouldUnregister={shouldUnregister}
           />
 
-          {(additionalFieldsLoading && !additionalFields?.length) && <div>
-            <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
-          </div>}
+          {additionalFieldsLoading && !additionalFields?.length && (
+            <div>
+              <CircularProgress
+                sx={{ display: 'block', margin: '20px auto' }}
+              />
+            </div>
+          )}
 
           {additionalFields?.map((field) => (
             <InputCreator
@@ -161,6 +190,7 @@ export default function InputCreator(
           onChange={onChange}
           onBlur={onBlur}
           name={computedName}
+          data-test={`${computedName}-text`}
           label={label}
           fullWidth
           helperText={description}
@@ -168,9 +198,11 @@ export default function InputCreator(
           shouldUnregister={shouldUnregister}
         />
 
-        {(additionalFieldsLoading && !additionalFields?.length) && <div>
-          <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
-        </div>}
+        {additionalFieldsLoading && !additionalFields?.length && (
+          <div>
+            <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
+          </div>
+        )}
 
         {additionalFields?.map((field) => (
           <InputCreator

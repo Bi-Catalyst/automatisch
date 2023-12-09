@@ -1,12 +1,18 @@
 import { QueryContext, ModelOptions } from 'objection';
 import type { RelationMappings } from 'objection';
 import { AES, enc } from 'crypto-js';
+import { IRequest } from '@automatisch/types';
+import App from './app';
+import AppConfig from './app-config';
+import AppAuthClient from './app-auth-client';
 import Base from './base';
 import User from './user';
 import Step from './step';
+import ExtendedQueryBuilder from './query-builder';
 import appConfig from '../config/app';
 import { IJSONObject } from '@automatisch/types';
 import Telemetry from '../helpers/telemetry';
+import globalVariable from '../helpers/global-variable';
 
 class Connection extends Base {
   id!: string;
@@ -18,6 +24,12 @@ class Connection extends Base {
   draft: boolean;
   count?: number;
   flowCount?: number;
+  user?: User;
+  steps?: Step[];
+  triggerSteps?: Step[];
+  appAuthClientId?: string;
+  appAuthClient?: AppAuthClient;
+  appConfig?: AppConfig;
 
   static tableName = 'connections';
 
@@ -31,10 +43,18 @@ class Connection extends Base {
       data: { type: 'string' },
       formattedData: { type: 'object' },
       userId: { type: 'string', format: 'uuid' },
+      appAuthClientId: { type: 'string', format: 'uuid' },
       verified: { type: 'boolean', default: false },
       draft: { type: 'boolean' },
+      deletedAt: { type: 'string' },
+      createdAt: { type: 'string' },
+      updatedAt: { type: 'string' },
     },
   };
+
+  static get virtualAttributes() {
+    return ['reconnectable'];
+  }
 
   static relationMappings = (): RelationMappings => ({
     user: {
@@ -53,7 +73,46 @@ class Connection extends Base {
         to: 'steps.connection_id',
       },
     },
+    triggerSteps: {
+      relation: Base.HasManyRelation,
+      modelClass: Step,
+      join: {
+        from: 'connections.id',
+        to: 'steps.connection_id',
+      },
+      filter(builder: ExtendedQueryBuilder<Step>) {
+        builder.where('type', '=', 'trigger');
+      },
+    },
+    appConfig: {
+      relation: Base.BelongsToOneRelation,
+      modelClass: AppConfig,
+      join: {
+        from: 'connections.key',
+        to: 'app_configs.key',
+      },
+    },
+    appAuthClient: {
+      relation: Base.BelongsToOneRelation,
+      modelClass: AppAuthClient,
+      join: {
+        from: 'connections.app_auth_client_id',
+        to: 'app_auth_clients.id',
+      },
+    },
   });
+
+  get reconnectable() {
+    if (this.appAuthClientId) {
+      return this.appAuthClient.active;
+    }
+
+    if (this.appConfig) {
+      return !this.appConfig.disabled && this.appConfig.allowCustomConnection;
+    }
+
+    return true;
+  }
 
   encryptData(): void {
     if (!this.eligibleForEncryption()) return;
@@ -109,6 +168,27 @@ class Connection extends Base {
   async $afterUpdate(opt: ModelOptions, queryContext: QueryContext) {
     await super.$afterUpdate(opt, queryContext);
     Telemetry.connectionUpdated(this);
+  }
+
+  async getApp() {
+    if (!this.key) return null;
+
+    return await App.findOneByKey(this.key);
+  }
+
+  async verifyWebhook(request: IRequest) {
+    if (!this.key) return true;
+
+    const app = await this.getApp();
+
+    const $ = await globalVariable({
+      connection: this,
+      request,
+    });
+
+    if (!app.auth?.verifyWebhook) return true;
+
+    return app.auth.verifyWebhook($);
   }
 }
 

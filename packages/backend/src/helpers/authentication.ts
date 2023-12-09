@@ -1,7 +1,7 @@
-import { rule, shield, allow } from 'graphql-shield';
+import { allow, rule, shield } from 'graphql-shield';
 import jwt from 'jsonwebtoken';
-import User from '../models/user';
 import appConfig from '../config/app';
+import User from '../models/user';
 
 const isAuthenticated = rule()(async (_parent, _args, req) => {
   const token = req.headers['authorization'];
@@ -12,7 +12,16 @@ const isAuthenticated = rule()(async (_parent, _args, req) => {
     const { userId } = jwt.verify(token, appConfig.appSecretKey) as {
       userId: string;
     };
-    req.currentUser = await User.query().findById(userId).throwIfNotFound();
+    req.currentUser = await User.query()
+      .findById(userId)
+      .leftJoinRelated({
+        role: true,
+        permissions: true,
+      })
+      .withGraphFetched({
+        role: true,
+        permissions: true,
+      });
 
     return true;
   } catch (error) {
@@ -25,13 +34,16 @@ const authentication = shield(
     Query: {
       '*': isAuthenticated,
       getAutomatischInfo: allow,
+      getConfig: allow,
+      getNotifications: allow,
       healthcheck: allow,
+      listSamlAuthProviders: allow,
     },
     Mutation: {
       '*': isAuthenticated,
-      login: allow,
-      createUser: allow,
       forgotPassword: allow,
+      login: allow,
+      registerUser: allow,
       resetPassword: allow,
     },
   },

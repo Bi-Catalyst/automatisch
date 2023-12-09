@@ -4,9 +4,13 @@ import bcrypt from 'bcrypt';
 
 const getInternalId = async (item: IJSONObject): Promise<string> => {
   if (item.guid) {
-    return item.guid.toString();
+    return typeof item.guid === 'object'
+      ? (item.guid as IJSONObject)['#text'].toString()
+      : item.guid.toString();
   } else if (item.id) {
-    return item.id.toString();
+    return typeof item.id === 'object'
+      ? (item.id as IJSONObject)['#text'].toString()
+      : item.id.toString();
   }
 
   return await hashItem(JSON.stringify(item));
@@ -18,7 +22,9 @@ const hashItem = async (value: string) => {
 
 const newItemsInFeed = async ($: IGlobalVariable) => {
   const { data } = await $.http.get($.step.parameters.feedUrl as string);
-  const parser = new XMLParser();
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+  });
   const parsedData = parser.parse(data);
 
   // naive implementation to cover atom and rss feeds

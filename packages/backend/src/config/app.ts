@@ -1,6 +1,12 @@
 import { URL } from 'node:url';
 import * as dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+
+if (process.env.APP_ENV === 'test') {
+  dotenv.config({ path: path.resolve(__dirname, '../../.env.test') });
+} else {
+  dotenv.config();
+}
 
 type AppConfig = {
   host: string;
@@ -9,7 +15,9 @@ type AppConfig = {
   webAppUrl: string;
   webhookUrl: string;
   appEnv: string;
+  logLevel: string;
   isDev: boolean;
+  isTest: boolean;
   isProd: boolean;
   postgresDatabase: string;
   postgresSchema: string;
@@ -47,6 +55,7 @@ type AppConfig = {
   paddlePublicKey: string;
   licenseKey: string;
   sentryDsn: string;
+  CI: boolean;
 };
 
 const host = process.env.HOST || 'localhost';
@@ -80,7 +89,9 @@ const appConfig: AppConfig = {
   protocol,
   port,
   appEnv: appEnv,
+  logLevel: process.env.LOG_LEVEL || 'info',
   isDev: appEnv === 'development',
+  isTest: appEnv === 'test',
   isProd: appEnv === 'production',
   version: process.env.npm_package_version,
   postgresDatabase: process.env.POSTGRES_DATABASE || 'automatisch_development',
@@ -121,6 +132,7 @@ const appConfig: AppConfig = {
   paddlePublicKey: process.env.PADDLE_PUBLIC_KEY,
   licenseKey: process.env.LICENSE_KEY,
   sentryDsn: process.env.SENTRY_DSN,
+  CI: process.env.CI === 'true',
 };
 
 if (!appConfig.encryptionKey) {

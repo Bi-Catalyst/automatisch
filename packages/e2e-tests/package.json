@@ -1,11 +1,13 @@
 {
   "name": "@automatisch/e2e-tests",
-  "version": "0.6.1",
+  "version": "0.10.0",
   "license": "See LICENSE file",
   "private": true,
   "description": "The open source Zapier alternative. Build workflow automation without spending time and money.",
   "scripts": {
-    "open": "cypress open"
+    "start-mock-license-server": "node ./license-server-with-mock.js",
+    "test": "playwright test",
+    "test:fast": "yarn test -j 90% --quiet --reporter null --ignore-snapshots -x"
   },
   "contributors": [
     {
@@ -22,6 +24,17 @@
     "url": "https://github.com/automatisch/automatisch/issues"
   },
   "devDependencies": {
-    "cypress": "^10.9.0"
+    "@faker-js/faker": "^8.2.0",
+    "@playwright/test": "^1.36.2"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.9.1",
+    "@typescript-eslint/parser": "^5.9.1",
+    "dotenv": "^16.3.1",
+    "eslint": "^8.13.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "micro": "^10.0.1",
+    "prettier": "^2.5.1"
   }
 }

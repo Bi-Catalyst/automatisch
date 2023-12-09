@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useQuery, useLazyQuery } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -31,9 +31,9 @@ import ChooseConnectionSubstep from 'components/ChooseConnectionSubstep';
 import Form from 'components/Form';
 import FlowStepContextMenu from 'components/FlowStepContextMenu';
 import AppIcon from 'components/AppIcon';
-import { GET_APPS } from 'graphql/queries/get-apps';
 import { GET_STEP_WITH_TEST_EXECUTIONS } from 'graphql/queries/get-step-with-test-executions';
 import useFormatMessage from 'hooks/useFormatMessage';
+import useApps from 'hooks/useApps';
 import {
   AppIconWrapper,
   AppIconStatusIconWrapper,
@@ -41,6 +41,7 @@ import {
   Header,
   Wrapper,
 } from './style';
+import isEmpty from 'helpers/isEmpty';
 
 type FlowStepProps = {
   collapsed?: boolean;
@@ -70,12 +71,19 @@ function generateValidationSchema(substeps: ISubstep[]) {
           substepArgumentValidations[key] = yup.mixed();
         }
 
-        if (typeof substepArgumentValidations[key] === 'object' && (arg.type === 'string' || arg.type === 'dropdown')) {
+        if (
+          typeof substepArgumentValidations[key] === 'object' &&
+          (arg.type === 'string' || arg.type === 'dropdown')
+        ) {
           // if the field is required, add the required validation
           if (required) {
-            substepArgumentValidations[key] = substepArgumentValidations[
-              key
-            ].required(`${key} is required.`);
+            substepArgumentValidations[key] = substepArgumentValidations[key]
+              .required(`${key} is required.`)
+              .test(
+                'empty-check',
+                `${key} must be not empty`,
+                (value: any) => !isEmpty(value)
+              );
           }
 
           // if the field depends on another field, add the dependsOn required validation
@@ -128,8 +136,10 @@ export default function FlowStep(
   const isAction = step.type === 'action';
   const formatMessage = useFormatMessage();
   const [currentSubstep, setCurrentSubstep] = React.useState<number | null>(0);
-  const { data } = useQuery(GET_APPS, {
-    variables: { onlyWithTriggers: isTrigger, onlyWithActions: isAction },
+
+  const { apps } = useApps({
+    onlyWithTriggers: isTrigger,
+    onlyWithActions: isAction,
   });
   const [
     getStepWithTestExecutions,
@@ -154,17 +164,14 @@ export default function FlowStep(
     isTrigger,
   ]);
 
-  const apps: IApp[] = data?.getApps;
   const app = apps?.find((currentApp: IApp) => currentApp.key === step.appKey);
 
   const actionsOrTriggers: Array<ITrigger | IAction> =
     (isTrigger ? app?.triggers : app?.actions) || [];
-  const substeps = React.useMemo(
-    () =>
-      actionsOrTriggers?.find(({ key }: ITrigger | IAction) => key === step.key)
-        ?.substeps || [],
-    [actionsOrTriggers, step?.key]
+  const actionOrTrigger = actionsOrTriggers?.find(
+    ({ key }) => key === step.key
   );
+  const substeps = actionOrTrigger?.substeps || [];
 
   const handleChange = React.useCallback(({ step }: { step: IStep }) => {
     onChange(step);
@@ -184,7 +191,12 @@ export default function FlowStep(
   );
 
   if (!apps) {
-    return <CircularProgress sx={{ display: 'block', my: 2 }} />;
+    return (
+      <CircularProgress
+        data-test="step-circular-loader"
+        sx={{ display: 'block', my: 2 }}
+      />
+    );
   }
 
   const onContextMenuClose = (event: React.SyntheticEvent) => {
@@ -276,7 +288,8 @@ export default function FlowStep(
                   step={step}
                 />
 
-                {substeps?.length > 0 &&
+                {actionOrTrigger &&
+                  substeps?.length > 0 &&
                   substeps.map((substep: ISubstep, index: number) => (
                     <React.Fragment key={`${substep?.name}-${index}`}>
                       {substep.key === 'chooseConnection' && app && (
@@ -301,6 +314,11 @@ export default function FlowStep(
                           onSubmit={expandNextStep}
                           onChange={handleChange}
                           onContinue={onContinue}
+                          showWebhookUrl={
+                            'showWebhookUrl' in actionOrTrigger
+                              ? actionOrTrigger.showWebhookUrl
+                              : false
+                          }
                           step={step}
                         />
                       )}

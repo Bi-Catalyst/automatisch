@@ -1,22 +1,37 @@
 # Available Apps
 
-:::warning
-We just have a few available integrations at the moment and we also know that workflows you can build with them is limited. But we still made the project public and want to share them with you so you can get a sense of what Automatisch can do. Meanwhile, we're working on adding more integrations and improving the existing ones.
-:::
+The following integrations are currently supported by Automatisch.
 
-Following integrations are currently supported by Automatisch.
-
+- [Carbone](/apps/carbone/actions)
 - [DeepL](/apps/deepl/actions)
 - [Delay](/apps/delay/actions)
 - [Discord](/apps/discord/actions)
 - [Dropbox](/apps/dropbox/actions)
+- [Filter](/apps/filter/actions)
 - [Flickr](/apps/flickr/triggers)
-- [Github](/apps/github/triggers)
+- [Formatter](/apps/formatter/actions)
+- [Ghost](/apps/ghost/triggers)
+- [GitHub](/apps/github/triggers)
+- [GitLab](/apps/gitlab/triggers)
+- [Google Calendar](/apps/google-calendar/triggers)
 - [Google Drive](/apps/google-drive/triggers)
 - [Google Forms](/apps/google-forms/triggers)
+- [Google Sheets](/apps/google-sheets/triggers)
 - [HTTP Request](/apps/http-request/actions)
+- [HubSpot](/apps/hubspot/actions)
+- [Invoice Ninja](/apps/invoice-ninja/triggers)
+- [Mattermost](/apps/mattermost/actions)
+- [Miro](/apps/miro/actions)
+- [Notion](/apps/notion/triggers)
 - [Ntfy](/apps/ntfy/actions)
+- [Odoo](/apps/odoo/actions)
 - [OpenAI](/apps/openai/actions)
+- [Pipedrive](/apps/pipedrive/triggers)
+- [Placetel](/apps/placetel/triggers)
+- [PostgreSQL](/apps/postgresql/actions)
+- [Pushover](/apps/pushover/actions)
+- [Reddit](/apps/reddit/triggers)
+- [Remove.bg](/apps/removebg/actions)
 - [RSS](/apps/rss/triggers)
 - [Salesforce](/apps/salesforce/triggers)
 - [Scheduler](/apps/scheduler/triggers)
@@ -28,7 +43,12 @@ Following integrations are currently supported by Automatisch.
 - [Stripe](/apps/stripe/triggers)
 - [Telegram](/apps/telegram-bot/actions)
 - [Todoist](/apps/todoist/triggers)
+- [Trello](/apps/trello/actions)
 - [Twilio](/apps/twilio/triggers)
 - [Twitter](/apps/twitter/triggers)
 - [Typeform](/apps/typeform/triggers)
 - [Webhooks](/apps/webhooks/triggers)
+- [WordPress](/apps/wordpress/triggers)
+- [Xero](/apps/xero/triggers)
+- [Youtube](/apps/youtube/triggers)
+- [Zendesk](/apps/zendesk/actions)
