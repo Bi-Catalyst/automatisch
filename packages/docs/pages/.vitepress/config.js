@@ -26,12 +26,21 @@ export default defineConfig({
       },
       {
         text: 'Apps',
-        link: '/apps/deepl/actions',
+        link: '/apps/carbone/connection',
         activeMatch: '/apps/',
       },
     ],
     sidebar: {
       '/apps/': [
+        {
+          text: 'Carbone',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/carbone/actions' },
+            { text: 'Connection', link: '/apps/carbone/connection' },
+          ],
+        },
         {
           text: 'DeepL',
           collapsible: true,
@@ -93,6 +102,15 @@ export default defineConfig({
           items: [
             { text: 'Actions', link: '/apps/formatter/actions' },
             { text: 'Connection', link: '/apps/formatter/connection' },
+          ],
+        },
+        {
+          text: 'Ghost',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/ghost/triggers' },
+            { text: 'Connection', link: '/apps/ghost/connection' },
           ],
         },
         {
@@ -272,6 +290,25 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Reddit',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/reddit/triggers' },
+            { text: 'Actions', link: '/apps/reddit/actions' },
+            { text: 'Connection', link: '/apps/reddit/connection' },
+          ],
+        },
+        {
+          text: 'Remove.bg',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/removebg/actions' },
+            { text: 'Connection', link: '/apps/removebg/connection' }
+          ],
+        },
+        {
           text: 'RSS',
           collapsible: true,
           collapsed: true,
@@ -430,6 +467,15 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Xero',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/xero/triggers' },
+            { text: 'Connection', link: '/apps/xero/connection' },
+          ],
+        },
+        {
           text: 'Youtube',
           collapsible: true,
           collapsed: true,
@@ -442,7 +488,10 @@ export default defineConfig({
           text: 'Zendesk',
           collapsible: true,
           collapsed: true,
-          items: [{ text: 'Connection', link: '/apps/zendesk/connection' }],
+          items: [
+            { text: 'Actions', link: '/apps/zendesk/actions' },
+            { text: 'Connection', link: '/apps/zendesk/connection' },
+          ],
         },
       ],
       '/': [

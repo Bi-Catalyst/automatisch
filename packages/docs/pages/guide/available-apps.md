@@ -2,6 +2,7 @@
 
 The following integrations are currently supported by Automatisch.
 
+- [Carbone](/apps/carbone/actions)
 - [DeepL](/apps/deepl/actions)
 - [Delay](/apps/delay/actions)
 - [Discord](/apps/discord/actions)
@@ -9,6 +10,7 @@ The following integrations are currently supported by Automatisch.
 - [Filter](/apps/filter/actions)
 - [Flickr](/apps/flickr/triggers)
 - [Formatter](/apps/formatter/actions)
+- [Ghost](/apps/ghost/triggers)
 - [GitHub](/apps/github/triggers)
 - [GitLab](/apps/gitlab/triggers)
 - [Google Calendar](/apps/google-calendar/triggers)
@@ -28,6 +30,8 @@ The following integrations are currently supported by Automatisch.
 - [Placetel](/apps/placetel/triggers)
 - [PostgreSQL](/apps/postgresql/actions)
 - [Pushover](/apps/pushover/actions)
+- [Reddit](/apps/reddit/triggers)
+- [Remove.bg](/apps/removebg/actions)
 - [RSS](/apps/rss/triggers)
 - [Salesforce](/apps/salesforce/triggers)
 - [Scheduler](/apps/scheduler/triggers)
@@ -45,4 +49,6 @@ The following integrations are currently supported by Automatisch.
 - [Typeform](/apps/typeform/triggers)
 - [Webhooks](/apps/webhooks/triggers)
 - [WordPress](/apps/wordpress/triggers)
+- [Xero](/apps/xero/triggers)
 - [Youtube](/apps/youtube/triggers)
+- [Zendesk](/apps/zendesk/actions)

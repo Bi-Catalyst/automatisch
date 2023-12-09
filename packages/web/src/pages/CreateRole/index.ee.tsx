@@ -44,8 +44,8 @@ export default function CreateRole(): React.ReactElement {
       enqueueSnackbar(formatMessage('createRole.successfullyCreated'), {
         variant: 'success',
         SnackbarProps: {
-          'data-test': 'snackbar-create-role-success'
-        }
+          'data-test': 'snackbar-create-role-success',
+        },
       });
 
       navigate(URLS.ROLES);
@@ -58,7 +58,9 @@ export default function CreateRole(): React.ReactElement {
     <Container sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
       <Grid container item xs={12} sm={10} md={9}>
         <Grid item xs={12} sx={{ mb: [2, 5] }}>
-          <PageTitle>{formatMessage('createRolePage.title')}</PageTitle>
+          <PageTitle data-test="create-role-title">
+            {formatMessage('createRolePage.title')}
+          </PageTitle>
         </Grid>
 
         <Grid item xs={12} justifyContent="flex-end" sx={{ pt: 5 }}>
@@ -69,12 +71,14 @@ export default function CreateRole(): React.ReactElement {
                 name="name"
                 label={formatMessage('roleForm.name')}
                 fullWidth
+                data-test="name-input"
               />
 
               <TextField
                 name="description"
                 label={formatMessage('roleForm.description')}
                 fullWidth
+                data-test="description-input"
               />
 
               <PermissionCatalogField
@@ -88,6 +92,7 @@ export default function CreateRole(): React.ReactElement {
                 color="primary"
                 sx={{ boxShadow: 2 }}
                 loading={loading}
+                data-test="create-button"
               >
                 {formatMessage('createRole.submit')}
               </LoadingButton>

@@ -54,8 +54,8 @@ export default function EditRole(): React.ReactElement {
       enqueueSnackbar(formatMessage('editRole.successfullyUpdated'), {
         variant: 'success',
         SnackbarProps: {
-          'data-test': 'snackbar-edit-role-success'
-        }
+          'data-test': 'snackbar-edit-role-success',
+        },
       });
 
       navigate(URLS.ROLES);
@@ -70,7 +70,9 @@ export default function EditRole(): React.ReactElement {
     <Container sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
       <Grid container item xs={12} sm={10} md={9}>
         <Grid item xs={12} sx={{ mb: [2, 5] }}>
-          <PageTitle>{formatMessage('editRolePage.title')}</PageTitle>
+          <PageTitle data-test="edit-role-title">
+            {formatMessage('editRolePage.title')}
+          </PageTitle>
         </Grid>
 
         <Grid item xs={12} justifyContent="flex-end" sx={{ pt: 5 }}>
@@ -92,6 +94,7 @@ export default function EditRole(): React.ReactElement {
                     required={true}
                     name="name"
                     label={formatMessage('roleForm.name')}
+                    data-test="name-input"
                     fullWidth
                   />
 
@@ -99,6 +102,7 @@ export default function EditRole(): React.ReactElement {
                     disabled={role.isAdmin}
                     name="description"
                     label={formatMessage('roleForm.description')}
+                    data-test="description-input"
                     fullWidth
                   />
                 </>
@@ -116,6 +120,7 @@ export default function EditRole(): React.ReactElement {
                 sx={{ boxShadow: 2 }}
                 loading={loading}
                 disabled={role?.isAdmin || roleLoading}
+                data-test="update-button"
               >
                 {formatMessage('editRole.submit')}
               </LoadingButton>
