@@ -1,4 +1,10 @@
-import { Route, Routes as ReactRouterRoutes, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import {
+  Route,
+  Routes as ReactRouterRoutes,
+  Navigate,
+  useNavigate,
+} from 'react-router-dom';
 
 import Layout from 'components/Layout';
 import NoResultFound from 'components/NotFound';
@@ -11,6 +17,7 @@ import Execution from 'pages/Execution';
 import Flows from 'pages/Flows';
 import Flow from 'pages/Flow';
 import Login from 'pages/Login';
+import AcceptInvitation from 'pages/AcceptInvitation';
 import LoginCallback from 'pages/LoginCallback';
 import SignUp from 'pages/SignUp/index.ee';
 import ForgotPassword from 'pages/ForgotPassword/index.ee';
@@ -22,11 +29,25 @@ import adminSettingsRoutes from './adminSettingsRoutes';
 import Notifications from 'pages/Notifications';
 import useAutomatischConfig from 'hooks/useAutomatischConfig';
 import useAuthentication from 'hooks/useAuthentication';
+import useAutomatischInfo from 'hooks/useAutomatischInfo';
+import Installation from 'pages/Installation';
 
 function Routes() {
+  const { data: automatischInfo, isSuccess } = useAutomatischInfo();
   const { data: configData } = useAutomatischConfig();
   const { isAuthenticated } = useAuthentication();
   const config = configData?.data;
+
+  const installed = isSuccess
+    ? automatischInfo.data.installationCompleted
+    : true;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!installed) {
+      navigate(URLS.INSTALLATION, { replace: true });
+    }
+  }, []);
 
   return (
     <ReactRouterRoutes>
@@ -49,19 +70,10 @@ function Routes() {
       />
 
       <Route
-        path={URLS.FLOWS}
+        path={`${URLS.FLOWS}/*`}
         element={
           <Layout>
             <Flows />
-          </Layout>
-        }
-      />
-
-      <Route
-        path={URLS.FLOW_PATTERN}
-        element={
-          <Layout>
-            <Flow />
           </Layout>
         }
       />
@@ -107,6 +119,15 @@ function Routes() {
       />
 
       <Route
+        path={URLS.ACCEPT_INVITATON}
+        element={
+          <PublicLayout>
+            <AcceptInvitation />
+          </PublicLayout>
+        }
+      />
+
+      <Route
         path={URLS.FORGOT_PASSWORD}
         element={
           <PublicLayout>
@@ -123,6 +144,17 @@ function Routes() {
           </PublicLayout>
         }
       />
+
+      {!installed && (
+        <Route
+          path={URLS.INSTALLATION}
+          element={
+            <PublicLayout>
+              <Installation />
+            </PublicLayout>
+          }
+        />
+      )}
 
       {!config?.disableNotificationsPage && (
         <Route
@@ -147,6 +179,7 @@ function Routes() {
       <Route path={URLS.ADMIN_SETTINGS} element={<AdminSettingsLayout />}>
         {adminSettingsRoutes}
       </Route>
+
       <Route path="*" element={<NoResultFound />} />
     </ReactRouterRoutes>
   );

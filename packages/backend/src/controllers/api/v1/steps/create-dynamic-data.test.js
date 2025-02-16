@@ -78,7 +78,7 @@ describe('POST /api/v1/steps/:stepId/dynamic-data', () => {
         })
         .expect(200);
 
-      expect(response.body.data).toEqual(repositories);
+      expect(response.body.data).toStrictEqual(repositories);
     });
 
     it('of the another users step', async () => {
@@ -117,7 +117,7 @@ describe('POST /api/v1/steps/:stepId/dynamic-data', () => {
         })
         .expect(200);
 
-      expect(response.body.data).toEqual(repositories);
+      expect(response.body.data).toStrictEqual(repositories);
     });
   });
 
@@ -169,9 +169,9 @@ describe('POST /api/v1/steps/:stepId/dynamic-data', () => {
           dynamicDataKey: 'listRepos',
           parameters: {},
         })
-        .expect(200);
+        .expect(422);
 
-      expect(response.body.errors).toEqual(errors);
+      expect(response.body.errors).toStrictEqual(errors);
     });
   });
 
@@ -193,7 +193,7 @@ describe('POST /api/v1/steps/:stepId/dynamic-data', () => {
     const notExistingStepUUID = Crypto.randomUUID();
 
     await request(app)
-      .get(`/api/v1/steps/${notExistingStepUUID}/dynamic-data`)
+      .post(`/api/v1/steps/${notExistingStepUUID}/dynamic-data`)
       .set('Authorization', token)
       .expect(404);
   });
@@ -216,7 +216,7 @@ describe('POST /api/v1/steps/:stepId/dynamic-data', () => {
     const step = await createStep({ appKey: null });
 
     await request(app)
-      .get(`/api/v1/steps/${step.id}/dynamic-data`)
+      .post(`/api/v1/steps/${step.id}/dynamic-data`)
       .set('Authorization', token)
       .expect(404);
   });

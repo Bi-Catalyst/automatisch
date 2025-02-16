@@ -8,9 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 class App {
   static folderPath = join(__dirname, '../apps');
+
   static list = fs
     .readdirSync(this.folderPath)
-    .filter((file) => fs.statSync(this.folderPath + '/' + file).isDirectory());
+    .filter((file) => fs.statSync(join(this.folderPath, file)).isDirectory());
 
   static async findAll(name, stripFuncs = true) {
     if (!name)

@@ -35,10 +35,11 @@ describe('userSerializer', () => {
       email: user.email,
       fullName: user.fullName,
       id: user.id,
+      status: user.status,
       updatedAt: user.updatedAt.getTime(),
     };
 
-    expect(userSerializer(user)).toEqual(expectedPayload);
+    expect(userSerializer(user)).toStrictEqual(expectedPayload);
   });
 
   it('should return user data with the role', async () => {

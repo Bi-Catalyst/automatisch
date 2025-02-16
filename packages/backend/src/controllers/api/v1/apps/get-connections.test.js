@@ -47,7 +47,7 @@ describe('GET /api/v1/apps/:appKey/connections', () => {
       currentUserConnectionOne,
     ]);
 
-    expect(response.body).toEqual(expectedPayload);
+    expect(response.body).toStrictEqual(expectedPayload);
   });
 
   it('should return the connections data of specified app for another user', async () => {
@@ -82,19 +82,19 @@ describe('GET /api/v1/apps/:appKey/connections', () => {
       anotherUserConnectionOne,
     ]);
 
-    expect(response.body).toEqual(expectedPayload);
+    expect(response.body).toStrictEqual(expectedPayload);
   });
 
   it('should return not found response for invalid connection UUID', async () => {
     await createPermission({
-      action: 'update',
+      action: 'read',
       subject: 'Connection',
       roleId: currentUserRole.id,
       conditions: ['isCreator'],
     });
 
     await request(app)
-      .get('/api/v1/connections/invalid-connection-id/connections')
+      .get('/api/v1/apps/invalid-connection-id/connections')
       .set('Authorization', token)
       .expect(404);
   });

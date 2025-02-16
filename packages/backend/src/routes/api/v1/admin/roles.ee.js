@@ -1,19 +1,29 @@
 import { Router } from 'express';
-import asyncHandler from 'express-async-handler';
 import { authenticateUser } from '../../../../helpers/authentication.js';
 import { authorizeAdmin } from '../../../../helpers/authorization.js';
 import { checkIsEnterprise } from '../../../../helpers/check-is-enterprise.js';
+import createRoleAction from '../../../../controllers/api/v1/admin/roles/create-role.ee.js';
 import getRolesAction from '../../../../controllers/api/v1/admin/roles/get-roles.ee.js';
 import getRoleAction from '../../../../controllers/api/v1/admin/roles/get-role.ee.js';
+import updateRoleAction from '../../../../controllers/api/v1/admin/roles/update-role.ee.js';
+import deleteRoleAction from '../../../../controllers/api/v1/admin/roles/delete-role.ee.js';
 
 const router = Router();
+
+router.post(
+  '/',
+  authenticateUser,
+  authorizeAdmin,
+  checkIsEnterprise,
+  createRoleAction
+);
 
 router.get(
   '/',
   authenticateUser,
   authorizeAdmin,
   checkIsEnterprise,
-  asyncHandler(getRolesAction)
+  getRolesAction
 );
 
 router.get(
@@ -21,7 +31,23 @@ router.get(
   authenticateUser,
   authorizeAdmin,
   checkIsEnterprise,
-  asyncHandler(getRoleAction)
+  getRoleAction
+);
+
+router.patch(
+  '/:roleId',
+  authenticateUser,
+  authorizeAdmin,
+  checkIsEnterprise,
+  updateRoleAction
+);
+
+router.delete(
+  '/:roleId',
+  authenticateUser,
+  authorizeAdmin,
+  checkIsEnterprise,
+  deleteRoleAction
 );
 
 export default router;

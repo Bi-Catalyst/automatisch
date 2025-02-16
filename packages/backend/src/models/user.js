@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
-import { DateTime } from 'luxon';
+import { DateTime, Duration } from 'luxon';
 import crypto from 'node:crypto';
+import { ValidationError } from 'objection';
 
 import appConfig from '../config/app.js';
 import { hasValidLicense } from '../helpers/license.ee.js';
@@ -12,14 +13,25 @@ import AccessToken from './access-token.js';
 import Connection from './connection.js';
 import Config from './config.js';
 import Execution from './execution.js';
+import ExecutionStep from './execution-step.js';
 import Flow from './flow.js';
 import Identity from './identity.ee.js';
 import Permission from './permission.js';
 import Role from './role.js';
 import Step from './step.js';
 import Subscription from './subscription.ee.js';
+import Folder from './folder.js';
 import UsageData from './usage-data.ee.js';
 import Billing from '../helpers/billing/index.ee.js';
+import NotAuthorizedError from '../errors/not-authorized.js';
+
+import deleteUserQueue from '../queues/delete-user.ee.js';
+import flowQueue from '../queues/flow.js';
+import emailQueue from '../queues/email.js';
+import {
+  REMOVE_AFTER_30_DAYS_OR_150_JOBS,
+  REMOVE_AFTER_7_DAYS_OR_50_JOBS,
+} from '../helpers/remove-job-configuration.js';
 
 class User extends Base {
   static tableName = 'users';
@@ -32,9 +44,22 @@ class User extends Base {
       id: { type: 'string', format: 'uuid' },
       fullName: { type: 'string', minLength: 1 },
       email: { type: 'string', format: 'email', minLength: 1, maxLength: 255 },
-      password: { type: 'string' },
-      resetPasswordToken: { type: 'string' },
-      resetPasswordTokenSentAt: { type: 'string' },
+      password: { type: 'string', minLength: 6 },
+      status: {
+        type: 'string',
+        enum: ['active', 'invited'],
+        default: 'active',
+      },
+      resetPasswordToken: { type: ['string', 'null'] },
+      resetPasswordTokenSentAt: {
+        type: ['string', 'null'],
+        format: 'date-time',
+      },
+      invitationToken: { type: ['string', 'null'] },
+      invitationTokenSentAt: {
+        type: ['string', 'null'],
+        format: 'date-time',
+      },
       trialExpiryDate: { type: 'string' },
       roleId: { type: 'string', format: 'uuid' },
       deletedAt: { type: 'string' },
@@ -154,7 +179,19 @@ class User extends Base {
         to: 'users.id',
       },
     },
+    folders: {
+      relation: Base.HasManyRelation,
+      modelClass: Folder,
+      join: {
+        from: 'users.id',
+        to: 'folders.user_id',
+      },
+    },
   });
+
+  static get virtualAttributes() {
+    return ['acceptInvitationUrl'];
+  }
 
   get authorizedFlows() {
     const conditions = this.can('read', 'Flow');
@@ -180,6 +217,14 @@ class User extends Base {
       : Execution.query();
   }
 
+  get acceptInvitationUrl() {
+    return `${appConfig.webAppUrl}/accept-invitation?token=${this.invitationToken}`;
+  }
+
+  get ability() {
+    return userAbility(this);
+  }
+
   static async authenticate(email, password) {
     const user = await User.query().findOne({
       email: email?.toLowerCase() || null,
@@ -191,8 +236,8 @@ class User extends Base {
     }
   }
 
-  login(password) {
-    return bcrypt.compare(password, this.password);
+  async login(password) {
+    return await bcrypt.compare(password, this.password);
   }
 
   async generateResetPasswordToken() {
@@ -200,6 +245,16 @@ class User extends Base {
     const resetPasswordTokenSentAt = new Date().toISOString();
 
     await this.$query().patch({ resetPasswordToken, resetPasswordTokenSentAt });
+  }
+
+  async generateInvitationToken() {
+    const invitationToken = crypto.randomBytes(64).toString('hex');
+    const invitationTokenSentAt = new Date().toISOString();
+
+    await this.$query().patchAndFetch({
+      invitationToken,
+      invitationTokenSentAt,
+    });
   }
 
   async resetPassword(password) {
@@ -210,7 +265,109 @@ class User extends Base {
     });
   }
 
-  async isResetPasswordTokenValid() {
+  async acceptInvitation(password) {
+    return await this.$query().patch({
+      invitationToken: null,
+      invitationTokenSentAt: null,
+      status: 'active',
+      password,
+    });
+  }
+
+  async updatePassword({ currentPassword, password }) {
+    if (await User.authenticate(this.email, currentPassword)) {
+      const user = await this.$query().patchAndFetch({
+        password,
+      });
+
+      return user;
+    }
+
+    throw new ValidationError({
+      data: {
+        currentPassword: [
+          {
+            message: 'is incorrect.',
+          },
+        ],
+      },
+      type: 'ValidationError',
+    });
+  }
+
+  async softRemove() {
+    await this.softRemoveAssociations();
+    await this.$query().delete();
+
+    const jobName = `Delete user - ${this.id}`;
+    const jobPayload = { id: this.id };
+    const millisecondsFor30Days = Duration.fromObject({ days: 30 }).toMillis();
+    const jobOptions = {
+      delay: millisecondsFor30Days,
+    };
+
+    await deleteUserQueue.add(jobName, jobPayload, jobOptions);
+  }
+
+  async softRemoveAssociations() {
+    const flows = await this.$relatedQuery('flows').where({
+      active: true,
+    });
+
+    const repeatableJobs = await flowQueue.getRepeatableJobs();
+
+    for (const flow of flows) {
+      const job = repeatableJobs.find((job) => job.id === flow.id);
+
+      if (job) {
+        await flowQueue.removeRepeatableByKey(job.key);
+      }
+    }
+
+    const executionIds = (
+      await this.$relatedQuery('executions').select('executions.id')
+    ).map((execution) => execution.id);
+    const flowIds = flows.map((flow) => flow.id);
+
+    await this.$relatedQuery('accessTokens').delete();
+    await ExecutionStep.query().delete().whereIn('execution_id', executionIds);
+    await this.$relatedQuery('executions').delete();
+    await this.$relatedQuery('steps').delete();
+    await Flow.query().whereIn('id', flowIds).delete();
+    await this.$relatedQuery('connections').delete();
+    await this.$relatedQuery('identities').delete();
+
+    if (appConfig.isCloud) {
+      await this.$relatedQuery('subscriptions').delete();
+      await this.$relatedQuery('usageData').delete();
+    }
+  }
+
+  async sendResetPasswordEmail() {
+    await this.generateResetPasswordToken();
+
+    const jobName = `Reset Password Email - ${this.id}`;
+
+    const jobPayload = {
+      email: this.email,
+      subject: 'Reset Password',
+      template: 'reset-password-instructions.ee',
+      params: {
+        token: this.resetPasswordToken,
+        webAppUrl: appConfig.webAppUrl,
+        fullName: this.fullName,
+      },
+    };
+
+    const jobOptions = {
+      removeOnComplete: REMOVE_AFTER_7_DAYS_OR_50_JOBS,
+      removeOnFail: REMOVE_AFTER_30_DAYS_OR_150_JOBS,
+    };
+
+    await emailQueue.add(jobName, jobPayload, jobOptions);
+  }
+
+  isResetPasswordTokenValid() {
     if (!this.resetPasswordTokenSentAt) {
       return false;
     }
@@ -222,13 +379,48 @@ class User extends Base {
     return now.getTime() - sentAt.getTime() < fourHoursInMilliseconds;
   }
 
+  async sendInvitationEmail() {
+    await this.generateInvitationToken();
+
+    const jobName = `Invitation Email - ${this.id}`;
+
+    const jobPayload = {
+      email: this.email,
+      subject: 'You are invited!',
+      template: 'invitation-instructions',
+      params: {
+        fullName: this.fullName,
+        acceptInvitationUrl: this.acceptInvitationUrl,
+      },
+    };
+
+    const jobOptions = {
+      removeOnComplete: REMOVE_AFTER_7_DAYS_OR_50_JOBS,
+      removeOnFail: REMOVE_AFTER_30_DAYS_OR_150_JOBS,
+    };
+
+    await emailQueue.add(jobName, jobPayload, jobOptions);
+  }
+
+  isInvitationTokenValid() {
+    if (!this.invitationTokenSentAt) {
+      return false;
+    }
+
+    const sentAt = new Date(this.invitationTokenSentAt);
+    const now = new Date();
+    const seventyTwoHoursInMilliseconds = 1000 * 60 * 60 * 72;
+
+    return now.getTime() - sentAt.getTime() < seventyTwoHoursInMilliseconds;
+  }
+
   async generateHash() {
     if (this.password) {
       this.password = await bcrypt.hash(this.password, 10);
     }
   }
 
-  async startTrialPeriod() {
+  startTrialPeriod() {
     this.trialExpiryDate = DateTime.now().plus({ days: 30 }).toISODate();
   }
 
@@ -324,6 +516,35 @@ class User extends Base {
     return invoices;
   }
 
+  async hasFolderAccess(folderId) {
+    if (folderId && folderId !== 'null') {
+      await this.$relatedQuery('folders').findById(folderId).throwIfNotFound();
+    }
+
+    return true;
+  }
+
+  getFlows({ folderId, name }) {
+    return this.authorizedFlows
+      .clone()
+      .withGraphFetched({
+        steps: true,
+      })
+      .where((builder) => {
+        if (name) {
+          builder.where('flows.name', 'ilike', `%${name}%`);
+        }
+
+        if (folderId === 'null') {
+          builder.whereNull('flows.folder_id');
+        } else if (folderId) {
+          builder.where('flows.folder_id', folderId);
+        }
+      })
+      .orderBy('active', 'desc')
+      .orderBy('updated_at', 'desc');
+  }
+
   async getApps(name) {
     const connections = await this.authorizedConnections
       .clone()
@@ -381,7 +602,7 @@ class User extends Base {
       email,
       password,
       fullName,
-      roleId: adminRole.id
+      roleId: adminRole.id,
     });
 
     await Config.markInstallationCompleted();
@@ -389,32 +610,45 @@ class User extends Base {
     return adminUser;
   }
 
-  async $beforeInsert(queryContext) {
-    await super.$beforeInsert(queryContext);
+  static async registerUser(userData) {
+    const { fullName, email, password } = userData;
 
-    this.email = this.email.toLowerCase();
-    await this.generateHash();
+    const role = await Role.query().findOne({ name: 'User' }).throwIfNotFound();
 
-    if (appConfig.isCloud) {
-      await this.startTrialPeriod();
-    }
+    const user = await User.query().insertAndFetch({
+      fullName,
+      email,
+      password,
+      roleId: role.id,
+    });
+
+    return user;
   }
 
-  async $beforeUpdate(opt, queryContext) {
-    await super.$beforeUpdate(opt, queryContext);
+  can(action, subject) {
+    const can = this.ability.can(action, subject);
 
+    if (!can) throw new NotAuthorizedError('The user is not authorized!');
+
+    const relevantRule = this.ability.relevantRuleFor(action, subject);
+
+    const conditions = relevantRule?.conditions || [];
+    const conditionMap = Object.fromEntries(
+      conditions.map((condition) => [condition, true])
+    );
+
+    return conditionMap;
+  }
+
+  lowercaseEmail() {
     if (this.email) {
       this.email = this.email.toLowerCase();
     }
-
-    await this.generateHash();
   }
 
-  async $afterInsert(queryContext) {
-    await super.$afterInsert(queryContext);
-
+  async createUsageData() {
     if (appConfig.isCloud) {
-      await this.$relatedQuery('usageData').insert({
+      return await this.$relatedQuery('usageData').insertAndFetch({
         userId: this.id,
         consumedTaskCount: 0,
         nextResetAt: DateTime.now().plus({ days: 30 }).toISODate(),
@@ -422,8 +656,10 @@ class User extends Base {
     }
   }
 
-  async $afterFind() {
-    if (await hasValidLicense()) return this;
+  async omitEnterprisePermissionsWithoutValidLicense() {
+    if (await hasValidLicense()) {
+      return this;
+    }
 
     if (Array.isArray(this.permissions)) {
       this.permissions = this.permissions.filter((permission) => {
@@ -437,35 +673,35 @@ class User extends Base {
         return !restrictedSubjects.includes(permission.subject);
       });
     }
-
-    return this;
   }
 
-  get ability() {
-    return userAbility(this);
+  async $beforeInsert(queryContext) {
+    await super.$beforeInsert(queryContext);
+
+    this.lowercaseEmail();
+    await this.generateHash();
+
+    if (appConfig.isCloud) {
+      this.startTrialPeriod();
+    }
   }
 
-  can(action, subject) {
-    const can = this.ability.can(action, subject);
+  async $beforeUpdate(opt, queryContext) {
+    await super.$beforeUpdate(opt, queryContext);
 
-    if (!can) throw new Error('Not authorized!');
+    this.lowercaseEmail();
 
-    const relevantRule = this.ability.relevantRuleFor(action, subject);
-
-    const conditions = relevantRule?.conditions || [];
-    const conditionMap = Object.fromEntries(
-      conditions.map((condition) => [condition, true])
-    );
-
-    return conditionMap;
+    await this.generateHash();
   }
 
-  cannot(action, subject) {
-    const cannot = this.ability.cannot(action, subject);
+  async $afterInsert(queryContext) {
+    await super.$afterInsert(queryContext);
 
-    if (cannot) throw new Error('Not authorized!');
+    await this.createUsageData();
+  }
 
-    return cannot;
+  async $afterFind() {
+    await this.omitEnterprisePermissionsWithoutValidLicense();
   }
 }
 

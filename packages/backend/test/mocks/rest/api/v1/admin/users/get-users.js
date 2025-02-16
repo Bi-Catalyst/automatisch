@@ -13,11 +13,11 @@ const getUsersMock = async (users, roles) => {
             description: role.description,
             id: role.id,
             isAdmin: role.isAdmin,
-            key: role.key,
             name: role.name,
             updatedAt: role.updatedAt.getTime(),
           }
         : null,
+      status: user.status,
       trialExpiryDate: user.trialExpiryDate.toISOString(),
       updatedAt: user.updatedAt.getTime(),
     };

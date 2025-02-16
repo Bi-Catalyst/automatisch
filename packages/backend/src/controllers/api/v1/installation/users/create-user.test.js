@@ -5,7 +5,7 @@ import Config from '../../../../../models/config.js';
 import User from '../../../../../models/user.js';
 import { createRole } from '../../../../../../test/factories/role';
 import { createUser } from '../../../../../../test/factories/user';
-import { createInstallationCompletedConfig } from '../../../../../../test/factories/config';
+import { markInstallationCompleted } from '../../../../../../test/factories/config';
 
 describe('POST /api/v1/installation/users', () => {
   let adminRole;
@@ -13,8 +13,7 @@ describe('POST /api/v1/installation/users', () => {
   beforeEach(async () => {
     adminRole = await createRole({
       name: 'Admin',
-      key: 'admin',
-    })
+    });
   });
 
   describe('for incomplete installations', () => {
@@ -26,7 +25,7 @@ describe('POST /api/v1/installation/users', () => {
         .send({
           email: 'user@automatisch.io',
           password: 'password',
-          fullName: 'Initial admin'
+          fullName: 'Initial admin',
         })
         .expect(204);
 
@@ -48,19 +47,19 @@ describe('POST /api/v1/installation/users', () => {
         .send({
           email: 'user@automatisch.io',
           password: 'password',
-          fullName: 'Initial admin'
+          fullName: 'Initial admin',
         })
         .expect(403);
 
       const usersCountAfter = await User.query().resultSize();
 
-      expect(usersCountBefore).toEqual(usersCountAfter);
+      expect(usersCountBefore).toStrictEqual(usersCountAfter);
     });
   });
 
   describe('for completed installations', () => {
     beforeEach(async () => {
-      await createInstallationCompletedConfig();
+      await markInstallationCompleted();
     });
 
     it('should respond with HTTP 403 when installation completed', async () => {
@@ -71,7 +70,7 @@ describe('POST /api/v1/installation/users', () => {
         .send({
           email: 'user@automatisch.io',
           password: 'password',
-          fullName: 'Initial admin'
+          fullName: 'Initial admin',
         })
         .expect(403);
 
@@ -80,5 +79,5 @@ describe('POST /api/v1/installation/users', () => {
       expect(user).toBeUndefined();
       expect(await Config.isInstallationCompleted()).toBe(true);
     });
-  })
+  });
 });

@@ -6,13 +6,12 @@ import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { useMutation } from '@apollo/client';
 
-import { CREATE_APP_CONFIG } from 'graphql/mutations/create-app-config';
-import { UPDATE_APP_CONFIG } from 'graphql/mutations/update-app-config';
 import Form from 'components/Form';
 import { Switch } from './style';
 import useEnqueueSnackbar from 'hooks/useEnqueueSnackbar';
+import useAdminCreateAppConfig from 'hooks/useAdminCreateAppConfig';
+import useAdminUpdateAppConfig from 'hooks/useAdminUpdateAppConfig';
 
 function AdminApplicationSettings(props) {
   const formatMessage = useFormatMessage();
@@ -20,34 +19,18 @@ function AdminApplicationSettings(props) {
 
   const { data: appConfig, isLoading: loading } = useAppConfig(props.appKey);
 
-  const [createAppConfig, { loading: loadingCreateAppConfig }] = useMutation(
-    CREATE_APP_CONFIG,
-    {
-      refetchQueries: ['GetAppConfig'],
-    },
-  );
+  const { mutateAsync: createAppConfig, isPending: isCreateAppConfigPending } =
+    useAdminCreateAppConfig(props.appKey);
 
-  const [updateAppConfig, { loading: loadingUpdateAppConfig }] = useMutation(
-    UPDATE_APP_CONFIG,
-    {
-      refetchQueries: ['GetAppConfig'],
-    },
-  );
+  const { mutateAsync: updateAppConfig, isPending: isUpdateAppConfigPending } =
+    useAdminUpdateAppConfig(props.appKey);
 
   const handleSubmit = async (values) => {
     try {
       if (!appConfig?.data) {
-        await createAppConfig({
-          variables: {
-            input: { key: props.appKey, ...values },
-          },
-        });
+        await createAppConfig(values);
       } else {
-        await updateAppConfig({
-          variables: {
-            input: { id: appConfig.data.id, ...values },
-          },
-        });
+        await updateAppConfig(values);
       }
 
       enqueueSnackbar(formatMessage('adminAppsSettings.successfullySaved'), {
@@ -63,8 +46,8 @@ function AdminApplicationSettings(props) {
 
   const defaultValues = useMemo(
     () => ({
-      allowCustomConnection: appConfig?.data?.allowCustomConnection || false,
-      shared: appConfig?.data?.shared || false,
+      useOnlyPredefinedAuthClients:
+        appConfig?.data?.useOnlyPredefinedAuthClients || false,
       disabled: appConfig?.data?.disabled || false,
     }),
     [appConfig?.data],
@@ -78,21 +61,17 @@ function AdminApplicationSettings(props) {
         <Paper sx={{ p: 2, mt: 4 }}>
           <Stack spacing={2} direction="column">
             <Switch
-              name="allowCustomConnection"
-              label={formatMessage('adminAppsSettings.allowCustomConnection')}
+              name="useOnlyPredefinedAuthClients"
+              label={formatMessage(
+                'adminAppsSettings.useOnlyPredefinedAuthClients',
+              )}
               FormControlLabelProps={{
                 labelPlacement: 'start',
               }}
             />
+
             <Divider />
-            <Switch
-              name="shared"
-              label={formatMessage('adminAppsSettings.shared')}
-              FormControlLabelProps={{
-                labelPlacement: 'start',
-              }}
-            />
-            <Divider />
+
             <Switch
               name="disabled"
               label={formatMessage('adminAppsSettings.disabled')}
@@ -102,13 +81,15 @@ function AdminApplicationSettings(props) {
             />
             <Divider />
           </Stack>
+
           <Stack>
             <LoadingButton
+              data-test="submit-button"
               type="submit"
               variant="contained"
               color="primary"
               sx={{ boxShadow: 2, mt: 5 }}
-              loading={loadingCreateAppConfig || loadingUpdateAppConfig}
+              loading={isCreateAppConfigPending || isUpdateAppConfigPending}
               disabled={!isDirty || loading}
             >
               {formatMessage('adminAppsSettings.save')}

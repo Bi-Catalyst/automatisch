@@ -158,6 +158,10 @@ export const defaultTheme = createTheme({
         fontSize: referenceTheme.typography.pxToRem(16),
       },
     },
+    stepApp: {
+      fontSize: referenceTheme.typography.pxToRem(12),
+      color: '#5C5C5C',
+    },
   },
   components: {
     MuiAppBar: {
@@ -210,6 +214,23 @@ export const defaultTheme = createTheme({
           },
         }),
       },
+    },
+    MuiChip: {
+      variants: [
+        {
+          props: { variant: 'stepType' },
+          style: ({ theme }) => ({
+            color: '#001F52',
+            fontSize: theme.typography.pxToRem(12),
+            border: '1px solid',
+            borderColor: alpha(theme.palette.primary.main, 0.3),
+            bgcolor: alpha(
+              theme.palette.primary.main,
+              theme.palette.action.selectedOpacity,
+            ),
+          }),
+        },
+      ],
     },
     MuiContainer: {
       defaultProps: {
@@ -278,8 +299,23 @@ export const defaultTheme = createTheme({
         }),
       },
     },
+    MuiAlert: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          fontWeight: theme.typography.fontWeightRegular,
+        }),
+      },
+    },
+    MuiAlertTitle: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          fontWeight: theme.typography.fontWeightBold,
+        }),
+      },
+    },
   },
 });
+
 export const mationTheme = createTheme(
   deepmerge(defaultTheme, {
     palette: {
@@ -301,4 +337,5 @@ export const mationTheme = createTheme(
     },
   }),
 );
+
 export default defaultTheme;

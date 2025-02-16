@@ -31,8 +31,11 @@ export const processAction = async (options) => {
     execution_id: $.execution.id,
   });
 
+  const stepSetupAndDynamicFields = await step.getSetupAndDynamicFields();
+
   const computedParameters = computeParameters(
     $.step.parameters,
+    stepSetupAndDynamicFields,
     priorExecutionSteps
   );
 
@@ -48,8 +51,6 @@ export const processAction = async (options) => {
     const shouldNotConsiderAsError = shouldEarlyExit || shouldNotProcess;
 
     if (!shouldNotConsiderAsError) {
-      logger.error(error);
-
       if (error instanceof HttpError) {
         $.actionOutput.error = error.details;
       } else {
@@ -59,6 +60,8 @@ export const processAction = async (options) => {
           $.actionOutput.error = { error: error.message };
         }
       }
+
+      logger.error(error);
     }
   }
 

@@ -42,6 +42,15 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Anthropic',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/anthropic/actions' },
+            { text: 'Connection', link: '/apps/anthropic/connection' },
+          ],
+        },
+        {
           text: 'Appwrite',
           collapsible: true,
           collapsed: true,
@@ -51,12 +60,40 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Brave Search',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/brave-search/actions' },
+            { text: 'Connection', link: '/apps/brave-search/connection' },
+          ],
+        },
+        {
           text: 'Carbone',
           collapsible: true,
           collapsed: true,
           items: [
             { text: 'Actions', link: '/apps/carbone/actions' },
             { text: 'Connection', link: '/apps/carbone/connection' },
+          ],
+        },
+        {
+          text: 'ClickUp',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/clickup/actions' },
+            { text: 'Triggers', link: '/apps/clickup/triggers' },
+            { text: 'Connection', link: '/apps/clickup/connection' },
+          ],
+        },
+        {
+          text: 'Cryptography',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/cryptography/actions' },
+            { text: 'Connection', link: '/apps/cryptography/connection' },
           ],
         },
         {
@@ -141,12 +178,31 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Freescout',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/freescout/triggers' },
+            { text: 'Connection', link: '/apps/freescout/connection' },
+          ],
+        },
+        {
           text: 'Ghost',
           collapsible: true,
           collapsed: true,
           items: [
             { text: 'Triggers', link: '/apps/ghost/triggers' },
             { text: 'Connection', link: '/apps/ghost/connection' },
+          ],
+        },
+        {
+          text: 'Gitea',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/gitea/triggers' },
+            { text: 'Actions', link: '/apps/gitea/actions' },
+            { text: 'Connection', link: '/apps/gitea/connection' },
           ],
         },
         {
@@ -166,6 +222,16 @@ export default defineConfig({
           items: [
             { text: 'Triggers', link: '/apps/gitlab/triggers' },
             { text: 'Connection', link: '/apps/gitlab/connection' },
+          ],
+        },
+        {
+          text: 'Gmail',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/gmail/triggers' },
+            { text: 'Connection', link: '/apps/gmail/connection' },
+            { text: 'Actions', link: '/apps/gmail/actions' },
           ],
         },
         {
@@ -244,6 +310,30 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Jotform',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/jotform/triggers' },
+            { text: 'Connection', link: '/apps/jotform/connection' },
+          ],
+        },
+        {
+          text: 'Mailchimp',
+          collapsible: true,
+          collapsed: true,
+          items: [{ text: 'Connection', link: '/apps/mailchimp/connection' }],
+        },
+        {
+          text: 'MailerLite',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/mailerlite/triggers' },
+            { text: 'Connection', link: '/apps/mailerlite/connection' },
+          ],
+        },
+        {
           text: 'Mattermost',
           collapsible: true,
           collapsed: true,
@@ -259,6 +349,25 @@ export default defineConfig({
           items: [
             { text: 'Actions', link: '/apps/miro/actions' },
             { text: 'Connection', link: '/apps/miro/connection' },
+          ],
+        },
+        {
+          text: 'Mistral AI',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/mistral-ai/actions' },
+            { text: 'Connection', link: '/apps/mistral-ai/connection' },
+          ],
+        },
+        {
+          text: 'Monday',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Triggers', link: '/apps/monday/triggers' },
+            { text: 'Actions', link: '/apps/monday/actions' },
+            { text: 'Connection', link: '/apps/monday/connection' },
           ],
         },
         {
@@ -296,6 +405,24 @@ export default defineConfig({
           items: [
             { text: 'Actions', link: '/apps/openai/actions' },
             { text: 'Connection', link: '/apps/openai/connection' },
+          ],
+        },
+        {
+          text: 'OpenRouter',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/openrouter/actions' },
+            { text: 'Connection', link: '/apps/openrouter/connection' },
+          ],
+        },
+        {
+          text: 'Perplexity',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/perplexity/actions' },
+            { text: 'Connection', link: '/apps/perplexity/connection' },
           ],
         },
         {
@@ -457,6 +584,15 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Together AI',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/together-ai/actions' },
+            { text: 'Connection', link: '/apps/together-ai/connection' },
+          ],
+        },
+        {
           text: 'Trello',
           collapsible: true,
           collapsed: true,
@@ -492,6 +628,15 @@ export default defineConfig({
           items: [
             { text: 'Triggers', link: '/apps/typeform/triggers' },
             { text: 'Connection', link: '/apps/typeform/connection' },
+          ],
+        },
+        {
+          text: 'VirtualQ',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            { text: 'Actions', link: '/apps/virtualq/actions' },
+            { text: 'Connection', link: '/apps/virtualq/connection' },
           ],
         },
         {

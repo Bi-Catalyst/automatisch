@@ -11,7 +11,9 @@ import {
   Typography,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
+
 import ControlledCheckbox from 'components/ControlledCheckbox';
+
 const PermissionCatalogFieldLoader = () => {
   return (
     <TableContainer>
@@ -37,14 +39,14 @@ const PermissionCatalogFieldLoader = () => {
               {[...Array(5)].map((action, index) => (
                 <TableCell key={index} align="center">
                   <Typography variant="subtitle2">
-                    <ControlledCheckbox name="value" />
+                    <ControlledCheckbox name="value" disabled />
                   </Typography>
                 </TableCell>
               ))}
 
               <TableCell>
                 <Stack direction="row" gap={1} justifyContent="right">
-                  <IconButton color="info" size="small">
+                  <IconButton color="info" size="small" disabled>
                     <SettingsIcon />
                   </IconButton>
                 </Stack>
@@ -56,4 +58,5 @@ const PermissionCatalogFieldLoader = () => {
     </TableContainer>
   );
 };
+
 export default PermissionCatalogFieldLoader;

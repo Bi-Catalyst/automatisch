@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import asyncHandler from 'express-async-handler';
 import { authenticateUser } from '../../../../helpers/authentication.js';
 import { authorizeAdmin } from '../../../../helpers/authorization.js';
 import { checkIsEnterprise } from '../../../../helpers/check-is-enterprise.js';
+import createSamlAuthProviderAction from '../../../../controllers/api/v1/admin/saml-auth-providers/create-saml-auth-provider.ee.js';
+import updateSamlAuthProviderAction from '../../../../controllers/api/v1/admin/saml-auth-providers/update-saml-auth-provider.ee.js';
 import getSamlAuthProvidersAction from '../../../../controllers/api/v1/admin/saml-auth-providers/get-saml-auth-providers.ee.js';
 import getSamlAuthProviderAction from '../../../../controllers/api/v1/admin/saml-auth-providers/get-saml-auth-provider.ee.js';
 import getRoleMappingsAction from '../../../../controllers/api/v1/admin/saml-auth-providers/get-role-mappings.ee.js';
+import updateRoleMappingsAction from '../../../../controllers/api/v1/admin/saml-auth-providers/update-role-mappings.ee.js';
 
 const router = Router();
 
@@ -14,7 +16,15 @@ router.get(
   authenticateUser,
   authorizeAdmin,
   checkIsEnterprise,
-  asyncHandler(getSamlAuthProvidersAction)
+  getSamlAuthProvidersAction
+);
+
+router.post(
+  '/',
+  authenticateUser,
+  authorizeAdmin,
+  checkIsEnterprise,
+  createSamlAuthProviderAction
 );
 
 router.get(
@@ -22,7 +32,7 @@ router.get(
   authenticateUser,
   authorizeAdmin,
   checkIsEnterprise,
-  asyncHandler(getSamlAuthProviderAction)
+  getSamlAuthProviderAction
 );
 
 router.get(
@@ -30,7 +40,23 @@ router.get(
   authenticateUser,
   authorizeAdmin,
   checkIsEnterprise,
-  asyncHandler(getRoleMappingsAction)
+  getRoleMappingsAction
+);
+
+router.patch(
+  '/:samlAuthProviderId',
+  authenticateUser,
+  authorizeAdmin,
+  checkIsEnterprise,
+  updateSamlAuthProviderAction
+);
+
+router.patch(
+  '/:samlAuthProviderId/role-mappings',
+  authenticateUser,
+  authorizeAdmin,
+  checkIsEnterprise,
+  updateRoleMappingsAction
 );
 
 export default router;

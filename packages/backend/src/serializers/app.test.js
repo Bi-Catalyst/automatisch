@@ -12,9 +12,10 @@ describe('appSerializer', () => {
       iconUrl: app.iconUrl,
       authDocUrl: app.authDocUrl,
       supportsConnections: app.supportsConnections,
+      supportsOauthClients: app.auth.generateAuthUrl ? true : false,
       primaryColor: app.primaryColor,
     };
 
-    expect(appSerializer(app)).toEqual(expectedPayload);
+    expect(appSerializer(app)).toStrictEqual(expectedPayload);
   });
 });

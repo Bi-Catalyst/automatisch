@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -43,6 +44,7 @@ function ChooseAppAndEventSubstep(props) {
   } = props;
   const formatMessage = useFormatMessage();
   const editorContext = React.useContext(EditorContext);
+  const queryClient = useQueryClient();
   const isTrigger = step.type === 'trigger';
   const isAction = step.type === 'action';
   const useAppsOptions = {};
@@ -91,15 +93,15 @@ function ChooseAppAndEventSubstep(props) {
   const onEventChange = React.useCallback(
     (event, selectedOption) => {
       if (typeof selectedOption === 'object') {
-        // TODO: try to simplify type casting below.
-        const typedSelectedOption = selectedOption;
-        const option = typedSelectedOption;
-        const eventKey = option?.value;
+        const eventKey = selectedOption?.value;
+        const eventLabel = selectedOption?.label;
+
         if (step.key !== eventKey) {
           onChange({
             step: {
               ...step,
               key: eventKey,
+              keyLabel: eventLabel,
             },
           });
         }
@@ -109,12 +111,10 @@ function ChooseAppAndEventSubstep(props) {
   );
 
   const onAppChange = React.useCallback(
-    (event, selectedOption) => {
+    async (event, selectedOption) => {
       if (typeof selectedOption === 'object') {
-        // TODO: try to simplify type casting below.
-        const typedSelectedOption = selectedOption;
-        const option = typedSelectedOption;
-        const appKey = option?.value;
+        const appKey = selectedOption?.value;
+
         if (step.appKey !== appKey) {
           onChange({
             step: {
@@ -122,7 +122,11 @@ function ChooseAppAndEventSubstep(props) {
               key: '',
               appKey,
               parameters: {},
+              connection: { id: null },
             },
+          });
+          await queryClient.invalidateQueries({
+            queryKey: ['steps', step.id, 'connection'],
           });
         }
       }

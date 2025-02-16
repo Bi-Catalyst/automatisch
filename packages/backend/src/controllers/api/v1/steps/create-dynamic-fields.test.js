@@ -56,7 +56,7 @@ describe('POST /api/v1/steps/:stepId/dynamic-fields', () => {
 
     const expectedPayload = await createDynamicFieldsMock();
 
-    expect(response.body).toEqual(expectedPayload);
+    expect(response.body).toStrictEqual(expectedPayload);
   });
 
   it('should return dynamically created fields of the another users step', async () => {
@@ -97,7 +97,7 @@ describe('POST /api/v1/steps/:stepId/dynamic-fields', () => {
 
     const expectedPayload = await createDynamicFieldsMock();
 
-    expect(response.body).toEqual(expectedPayload);
+    expect(response.body).toStrictEqual(expectedPayload);
   });
 
   it('should return not found response for not existing step UUID', async () => {
@@ -118,7 +118,7 @@ describe('POST /api/v1/steps/:stepId/dynamic-fields', () => {
     const notExistingStepUUID = Crypto.randomUUID();
 
     await request(app)
-      .get(`/api/v1/steps/${notExistingStepUUID}/dynamic-fields`)
+      .post(`/api/v1/steps/${notExistingStepUUID}/dynamic-fields`)
       .set('Authorization', token)
       .expect(404);
   });
@@ -138,10 +138,11 @@ describe('POST /api/v1/steps/:stepId/dynamic-fields', () => {
       conditions: [],
     });
 
-    const step = await createStep({ appKey: null });
+    const step = await createStep();
+    await step.$query().patch({ appKey: null });
 
     await request(app)
-      .get(`/api/v1/steps/${step.id}/dynamic-fields`)
+      .post(`/api/v1/steps/${step.id}/dynamic-fields`)
       .set('Authorization', token)
       .expect(404);
   });

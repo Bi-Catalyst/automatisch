@@ -63,6 +63,8 @@ export default async (flowId, request, response) => {
     });
 
     if (testRun) {
+      response.status(204).end();
+
       // in case of testing, we do not process the whole process.
       continue;
     }
@@ -74,7 +76,17 @@ export default async (flowId, request, response) => {
         executionId,
       });
 
-      if (actionStep.key === 'respondWith' && !response.headersSent) {
+      if (actionStep.appKey === 'filter' && !actionExecutionStep.dataOut) {
+        response.status(422).end();
+
+        break;
+      }
+
+      if (
+        (actionStep.key === 'respondWith' ||
+          actionStep.key === 'respondWithVoiceXml') &&
+        !response.headersSent
+      ) {
         const { headers, statusCode, body } = actionExecutionStep.dataOut;
 
         // we set the custom response headers

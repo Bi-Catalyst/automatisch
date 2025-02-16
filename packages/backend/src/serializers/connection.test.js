@@ -13,8 +13,7 @@ describe('connectionSerializer', () => {
     const expectedPayload = {
       id: connection.id,
       key: connection.key,
-      reconnectable: connection.reconnectable,
-      appAuthClientId: connection.appAuthClientId,
+      oauthClientId: connection.oauthClientId,
       formattedData: {
         screenName: connection.formattedData.screenName,
       },
@@ -23,6 +22,6 @@ describe('connectionSerializer', () => {
       updatedAt: connection.updatedAt.getTime(),
     };
 
-    expect(connectionSerializer(connection)).toEqual(expectedPayload);
+    expect(connectionSerializer(connection)).toStrictEqual(expectedPayload);
   });
 });

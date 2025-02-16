@@ -1,8 +1,19 @@
 import logger from './logger.js';
 import objection from 'objection';
 import * as Sentry from './sentry.ee.js';
-const { NotFoundError, DataError } = objection;
+const {
+  NotFoundError,
+  DataError,
+  ForeignKeyViolationError,
+  ValidationError,
+  UniqueViolationError,
+} = objection;
+import NotAuthorizedError from '../errors/not-authorized.js';
 import HttpError from '../errors/http.js';
+import {
+  renderObjectionError,
+  renderUniqueViolationError,
+} from './renderer.js';
 
 // Do not remove `next` argument as the function signature will not fit for an error handler middleware
 // eslint-disable-next-line no-unused-vars
@@ -13,6 +24,18 @@ const errorHandler = (error, request, response, next) => {
 
   if (notFoundAppError(error)) {
     response.status(404).end();
+  }
+
+  if (error instanceof ValidationError) {
+    renderObjectionError(response, error, 422);
+  }
+
+  if (error instanceof UniqueViolationError) {
+    renderUniqueViolationError(response, error);
+  }
+
+  if (error instanceof ForeignKeyViolationError) {
+    response.status(500).end();
   }
 
   if (error instanceof DataError) {
@@ -27,7 +50,11 @@ const errorHandler = (error, request, response, next) => {
       },
     };
 
-    response.status(200).json(httpErrorPayload);
+    response.status(422).json(httpErrorPayload);
+  }
+
+  if (error instanceof NotAuthorizedError) {
+    response.status(403).end();
   }
 
   const statusCode = error.statusCode || 500;
