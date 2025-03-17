@@ -22,6 +22,7 @@ import Step from './step.js';
 import Subscription from './subscription.ee.js';
 import Folder from './folder.js';
 import UsageData from './usage-data.ee.js';
+import Template from './template.ee.js';
 import Billing from '../helpers/billing/index.ee.js';
 import NotAuthorizedError from '../errors/not-authorized.js';
 
@@ -524,7 +525,13 @@ class User extends Base {
     return true;
   }
 
-  getFlows({ folderId, name }) {
+  async getFolderIds() {
+    const folders = await this.$relatedQuery('folders').select('id');
+
+    return folders.map((folder) => folder.id);
+  }
+
+  getFlows({ folderId, name }, ownedFolderIds) {
     return this.authorizedFlows
       .clone()
       .withGraphFetched({
@@ -536,7 +543,9 @@ class User extends Base {
         }
 
         if (folderId === 'null') {
-          builder.whereNull('flows.folder_id');
+          builder
+            .whereNull('flows.folder_id')
+            .orWhereNotIn('flows.folder_id', ownedFolderIds);
         } else if (folderId) {
           builder.where('flows.folder_id', folderId);
         }
@@ -673,6 +682,26 @@ class User extends Base {
         return !restrictedSubjects.includes(permission.subject);
       });
     }
+  }
+
+  async createEmptyFlow() {
+    const flow = await this.$relatedQuery('flows').insertAndFetch({
+      name: 'Name your flow',
+    });
+
+    await flow.createInitialSteps();
+
+    return flow;
+  }
+
+  async createFlowFromTemplate(templateId) {
+    const template = await Template.query()
+      .findById(templateId)
+      .throwIfNotFound();
+
+    const flow = await Flow.import(this, template.flowData);
+
+    return flow;
   }
 
   async $beforeInsert(queryContext) {

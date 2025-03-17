@@ -5,19 +5,21 @@ import api from 'helpers/api';
 export default function useCreateFlow() {
   const queryClient = useQueryClient();
 
-  const query = useMutation({
-    mutationFn: async () => {
-      const { data } = await api.post('/v1/flows');
+  const mutation = useMutation({
+    mutationFn: async ({ templateId }) => {
+      const { data } = await api.post('/v1/flows', null, {
+        params: { templateId },
+      });
 
       return data;
     },
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ['flows'],
       });
     },
   });
 
-  return query;
+  return mutation;
 }

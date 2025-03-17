@@ -34,7 +34,9 @@ import { createExecution } from '../../test/factories/execution.js';
 import { createSubscription } from '../../test/factories/subscription.js';
 import { createUsageData } from '../../test/factories/usage-data.js';
 import { createFolder } from '../../test/factories/folder.js';
+import { createTemplate } from '../../test/factories/template.js';
 import Billing from '../helpers/billing/index.ee.js';
+import Template from './template.ee.js';
 
 describe('User model', () => {
   it('tableName should return correct name', () => {
@@ -1180,13 +1182,22 @@ describe('User model', () => {
   });
 
   describe('getFlows', () => {
-    let currentUser, currentUserRole, folder, flowOne, flowTwo;
+    let currentUser,
+      currentUserRole,
+      anotherUser,
+      folder,
+      flowOne,
+      flowTwo,
+      flowThree;
 
     beforeEach(async () => {
       currentUser = await createUser();
       currentUserRole = await currentUser.$relatedQuery('role');
 
+      anotherUser = await createUser();
+
       folder = await createFolder({ userId: currentUser.id });
+      await createFolder({ userId: anotherUser.id });
 
       flowOne = await createFlow({
         userId: currentUser.id,
@@ -1199,11 +1210,16 @@ describe('User model', () => {
         name: 'Flow Two',
       });
 
+      flowThree = await createFlow({
+        userId: anotherUser.id,
+        name: 'Flow Three',
+      });
+
       await createPermission({
         action: 'read',
         subject: 'Flow',
         roleId: currentUserRole.id,
-        conditions: ['isCreator'],
+        conditions: [],
       });
 
       currentUser = await currentUser.$query().withGraphFetched({
@@ -1212,44 +1228,66 @@ describe('User model', () => {
       });
     });
 
-    it('should return flows filtered by folderId', async () => {
-      const flows = await currentUser.getFlows({ folderId: folder.id });
-
-      expect(flows).toHaveLength(1);
-      expect(flows[0].id).toBe(flowOne.id);
-    });
-
     it('should return flows filtered by name', async () => {
-      const flows = await currentUser.getFlows({ name: 'Flow Two' });
+      const flows = await currentUser.getFlows({ name: 'Flow Two' }, [
+        folder.id,
+      ]);
 
       expect(flows).toHaveLength(1);
       expect(flows[0].id).toBe(flowTwo.id);
     });
 
+    it('should return flows with specific folder ID', async () => {
+      const flows = await currentUser.getFlows({ folderId: folder.id }, [
+        folder.id,
+      ]);
+
+      expect(flows.length).toBe(1);
+      expect(flows[0].id).toBe(flowOne.id);
+    });
+
     it('should return flows filtered by folderId and name', async () => {
-      const flows = await currentUser.getFlows({
-        folderId: folder.id,
-        name: 'Flow One',
-      });
+      const flows = await currentUser.getFlows(
+        {
+          folderId: folder.id,
+          name: 'Flow One',
+        },
+        [folder.id]
+      );
 
       expect(flows).toHaveLength(1);
       expect(flows[0].id).toBe(flowOne.id);
     });
 
     it('should return all flows if no filters are provided', async () => {
-      const flows = await currentUser.getFlows({});
+      const flows = await currentUser.getFlows({}, [folder.id]);
 
-      expect(flows).toHaveLength(2);
+      expect(flows).toHaveLength(3);
       expect(flows.map((flow) => flow.id)).toEqual(
-        expect.arrayContaining([flowOne.id, flowTwo.id])
+        expect.arrayContaining([flowOne.id, flowTwo.id, flowThree.id])
       );
     });
 
     it('should return uncategorized flows if the folderId is null', async () => {
-      const flows = await currentUser.getFlows({ folderId: 'null' });
+      const flows = await currentUser.getFlows({ folderId: 'null' }, [
+        folder.id,
+      ]);
 
-      expect(flows).toHaveLength(1);
-      expect(flows[0].id).toBe(flowTwo.id);
+      expect(flows).toHaveLength(2);
+      expect(flows.map((flow) => flow.id)).toEqual(
+        expect.arrayContaining([flowTwo.id, flowThree.id])
+      );
+    });
+
+    it('should return other users flow as uncategorized flows if the folderId is null', async () => {
+      const flows = await currentUser.getFlows({ folderId: 'null' }, [
+        folder.id,
+      ]);
+
+      expect(flows).toHaveLength(2);
+      expect(flows.map((flow) => flow.id)).toEqual(
+        expect.arrayContaining([flowTwo.id, flowThree.id])
+      );
     });
   });
 
@@ -1504,6 +1542,61 @@ describe('User model', () => {
       expect(userWithRoleAndPermissions.permissions).toStrictEqual([
         readFlowPermission,
       ]);
+    });
+  });
+
+  describe('createEmptyFlow', () => {
+    it('should create a flow with default name', async () => {
+      const user = await createUser();
+      const flow = await user.createEmptyFlow();
+
+      expect(flow.name).toBe('Name your flow');
+      expect(flow.userId).toBe(user.id);
+    });
+
+    it('should call createInitialSteps on the created flow', async () => {
+      const user = await createUser();
+      const createInitialStepsSpy = vi.spyOn(
+        Flow.prototype,
+        'createInitialSteps'
+      );
+
+      await user.createEmptyFlow();
+
+      expect(createInitialStepsSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('createFlowFromTemplate', () => {
+    let user, template;
+
+    beforeEach(async () => {
+      user = await createUser();
+      template = await createTemplate();
+    });
+
+    it('should throw an error if template is not found', async () => {
+      const nonExistentTemplateId = Crypto.randomUUID();
+
+      await expect(
+        user.createFlowFromTemplate(nonExistentTemplateId)
+      ).rejects.toThrow('NotFoundError');
+    });
+
+    it('should call Flow.import with the correct parameters', async () => {
+      vi.spyOn(Template.query(), 'findById').mockImplementation(() => ({
+        throwIfNotFound: () => template,
+      }));
+
+      const importSpy = vi.spyOn(Flow, 'import').mockResolvedValue({
+        id: Crypto.randomUUID(),
+        name: template.flowData.name,
+        steps: [],
+      });
+
+      await user.createFlowFromTemplate(template.id);
+
+      expect(importSpy).toHaveBeenCalledWith(user, template.flowData);
     });
   });
 
