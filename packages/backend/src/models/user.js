@@ -531,27 +531,85 @@ class User extends Base {
     return folders.map((folder) => folder.id);
   }
 
-  getFlows({ folderId, name }, ownedFolderIds) {
+  getFlows({ folderId, name, status, onlyOwnedFlows }, ownedFolderIds) {
     return this.authorizedFlows
       .clone()
       .withGraphFetched({
         steps: true,
       })
+      .select('flows.*')
+      .select(Flow.raw('flows.user_id = ? as "isOwner"', [this.id]))
       .where((builder) => {
         if (name) {
           builder.where('flows.name', 'ilike', `%${name}%`);
         }
 
+        if (status === 'published') {
+          builder.where('flows.active', true);
+        } else if (status === 'draft') {
+          builder.where('flows.active', false);
+        }
+
+        if (onlyOwnedFlows) {
+          builder.where('flows.user_id', this.id);
+        }
+
         if (folderId === 'null') {
-          builder
-            .whereNull('flows.folder_id')
-            .orWhereNotIn('flows.folder_id', ownedFolderIds);
+          builder.where((builder) => {
+            builder
+              .whereNull('flows.folder_id')
+              .orWhereNotIn('flows.folder_id', ownedFolderIds);
+          });
         } else if (folderId) {
           builder.where('flows.folder_id', folderId);
         }
       })
       .orderBy('active', 'desc')
       .orderBy('updated_at', 'desc');
+  }
+
+  getExecutions({ name, status, startDateTime, endDateTime }) {
+    return this.authorizedExecutions
+      .clone()
+      .withSoftDeleted()
+      .joinRelated({
+        flow: true,
+      })
+      .withGraphFetched({
+        flow: {
+          steps: true,
+        },
+      })
+      .where((builder) => {
+        builder.withSoftDeleted();
+
+        if (name) {
+          builder.where('flow.name', 'ilike', `%${name}%`);
+        }
+
+        if (status === 'success') {
+          builder.where('executions.status', 'success');
+        } else if (status === 'failure') {
+          builder.where('executions.status', 'failure');
+        }
+
+        if (startDateTime) {
+          const startDate = DateTime.fromMillis(Number(startDateTime));
+
+          if (startDate.isValid) {
+            builder.where('executions.created_at', '>=', startDate.toISO());
+          }
+        }
+
+        if (endDateTime) {
+          const endDate = DateTime.fromMillis(Number(endDateTime));
+
+          if (endDate.isValid) {
+            builder.where('executions.created_at', '<=', endDate.toISO());
+          }
+        }
+      })
+      .orderBy('created_at', 'desc');
   }
 
   async getApps(name) {

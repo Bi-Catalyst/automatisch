@@ -8,8 +8,8 @@ import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import * as React from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ReactFlowProvider } from 'reactflow';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { ReactFlowProvider } from '@xyflow/react';
 
 import Can from 'components/Can';
 import Container from 'components/Container';
@@ -32,6 +32,7 @@ const useNewFlowEditor = process.env.REACT_APP_USE_NEW_FLOW_EDITOR === 'true';
 
 export default function EditorLayout() {
   const { flowId } = useParams();
+  const { state } = useLocation();
   const formatMessage = useFormatMessage();
   const enqueueSnackbar = useEnqueueSnackbar();
   const { mutateAsync: updateFlow } = useUpdateFlow(flowId);
@@ -81,7 +82,7 @@ export default function EditorLayout() {
             <IconButton
               size="small"
               component={Link}
-              to={URLS.FLOWS}
+              to={state?.from || URLS.FLOWS}
               data-test="editor-go-back-button"
             >
               <ArrowBackIosNewIcon fontSize="small" />

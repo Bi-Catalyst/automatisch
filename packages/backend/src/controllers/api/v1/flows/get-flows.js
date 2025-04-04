@@ -1,5 +1,5 @@
 import { renderObject } from '../../../../helpers/renderer.js';
-import paginateRest from '../../../../helpers/pagination-rest.js';
+import paginateRest from '../../../../helpers/pagination.js';
 
 export default async (request, response) => {
   await request.currentUser.hasFolderAccess(request.body.folderId);
@@ -16,5 +16,10 @@ export default async (request, response) => {
 };
 
 const flowParams = (request) => {
-  return { folderId: request.query.folderId, name: request.query.name };
+  return {
+    folderId: request.query.folderId,
+    name: request.query.name,
+    status: request.query.status,
+    onlyOwnedFlows: request.query.onlyOwnedFlows,
+  };
 };

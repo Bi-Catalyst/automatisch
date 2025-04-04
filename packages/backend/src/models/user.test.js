@@ -1186,6 +1186,7 @@ describe('User model', () => {
       currentUserRole,
       anotherUser,
       folder,
+      anotherUserFolder,
       flowOne,
       flowTwo,
       flowThree;
@@ -1197,22 +1198,25 @@ describe('User model', () => {
       anotherUser = await createUser();
 
       folder = await createFolder({ userId: currentUser.id });
-      await createFolder({ userId: anotherUser.id });
+      anotherUserFolder = await createFolder({ userId: anotherUser.id });
 
       flowOne = await createFlow({
         userId: currentUser.id,
         folderId: folder.id,
+        active: true,
         name: 'Flow One',
       });
 
       flowTwo = await createFlow({
         userId: currentUser.id,
+        active: false,
         name: 'Flow Two',
       });
 
       flowThree = await createFlow({
         userId: anotherUser.id,
         name: 'Flow Three',
+        folderId: anotherUserFolder.id,
       });
 
       await createPermission({
@@ -1232,6 +1236,45 @@ describe('User model', () => {
       const flows = await currentUser.getFlows({ name: 'Flow Two' }, [
         folder.id,
       ]);
+
+      expect(flows).toHaveLength(1);
+      expect(flows[0].id).toBe(flowTwo.id);
+    });
+
+    it('should return flows filtered by status', async () => {
+      const flows = await currentUser.getFlows({ status: 'published' }, [
+        folder.id,
+      ]);
+
+      expect(flows).toHaveLength(1);
+      expect(flows[0].id).toBe(flowOne.id);
+    });
+
+    it('should return flows filtered by name and status', async () => {
+      const flows = await currentUser.getFlows(
+        { name: 'Flow One', status: 'published' },
+        [folder.id]
+      );
+
+      expect(flows).toHaveLength(1);
+      expect(flows[0].id).toBe(flowOne.id);
+    });
+
+    it('should return flows filtered by onlyOwnedFlows', async () => {
+      const flows = await currentUser.getFlows({ onlyOwnedFlows: true }, [
+        folder.id,
+      ]);
+
+      expect(flows).toHaveLength(2);
+      expect(flows[0].id).toBe(flowOne.id);
+      expect(flows[1].id).toBe(flowTwo.id);
+    });
+
+    it('should return flows filtered by onlyOwnedFlows with null folderId', async () => {
+      const flows = await currentUser.getFlows(
+        { onlyOwnedFlows: true, folderId: 'null' },
+        [folder.id]
+      );
 
       expect(flows).toHaveLength(1);
       expect(flows[0].id).toBe(flowTwo.id);
@@ -1288,6 +1331,150 @@ describe('User model', () => {
       expect(flows.map((flow) => flow.id)).toEqual(
         expect.arrayContaining([flowTwo.id, flowThree.id])
       );
+    });
+
+    it('should return isOwner false if the flow is owned by another user', async () => {
+      const anotherUser = await createUser();
+
+      await createFlow({
+        userId: anotherUser.id,
+        folderId: folder.id,
+        active: true,
+        name: 'Another User Flow One',
+      });
+
+      const flows = await currentUser.getFlows({ onlyOwnedFlows: false }, [
+        folder.id,
+      ]);
+
+      expect(flows[0].isOwner).toBe(false);
+    });
+
+    it('should return specified flows with all filters together', async () => {
+      const flows = await currentUser.getFlows(
+        {
+          folderId: folder.id,
+          name: 'Flow One',
+          status: 'published',
+          onlyOwnedFlows: true,
+        },
+        [folder.id]
+      );
+
+      expect(flows).toHaveLength(1);
+      expect(flows[0].id).toBe(flowOne.id);
+    });
+  });
+
+  describe('getExecutions', () => {
+    let currentUser,
+      currentUserRole,
+      anotherUser,
+      flow,
+      executionOne,
+      executionTwo,
+      executionThree;
+
+    beforeEach(async () => {
+      currentUser = await createUser();
+      currentUserRole = await currentUser.$relatedQuery('role');
+
+      anotherUser = await createUser();
+
+      flow = await createFlow({
+        userId: currentUser.id,
+        name: 'Test Flow',
+      });
+
+      const anotherUserFlow = await createFlow({
+        userId: anotherUser.id,
+        name: 'Another User Flow',
+      });
+
+      executionOne = await createExecution({
+        flowId: flow.id,
+        testRun: false,
+        status: 'success',
+      });
+
+      // sleep for 10 milliseconds to make sure the created_at values are different
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      executionTwo = await createExecution({
+        flowId: flow.id,
+        testRun: true,
+        status: 'failure',
+      });
+
+      // sleep for 10 milliseconds to make sure the created_at values are different
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      executionThree = await createExecution({
+        flowId: anotherUserFlow.id,
+        testRun: false,
+        status: 'success',
+      });
+
+      await createPermission({
+        action: 'read',
+        subject: 'Execution',
+        roleId: currentUserRole.id,
+        conditions: [],
+      });
+
+      currentUser = await currentUser.$query().withGraphFetched({
+        role: true,
+        permissions: true,
+      });
+    });
+
+    it('should return executions filtered by name', async () => {
+      const executions = await currentUser.getExecutions({ name: 'Test Flow' });
+
+      expect(executions).toHaveLength(2);
+
+      expect(executions[0].id).toBe(executionTwo.id);
+      expect(executions[1].id).toBe(executionOne.id);
+    });
+
+    it('should return executions filtered by status', async () => {
+      const executions = await currentUser.getExecutions({ status: 'failure' });
+
+      expect(executions).toHaveLength(1);
+      expect(executions[0].id).toBe(executionTwo.id);
+    });
+
+    it('should return executions filtered by startDateTime and endDateTime', async () => {
+      const executions = await currentUser.getExecutions({
+        startDateTime: executionOne.createdAt,
+        endDateTime: executionTwo.createdAt,
+      });
+
+      expect(executions).toHaveLength(2);
+      expect(executions[0].id).toBe(executionTwo.id);
+      expect(executions[1].id).toBe(executionOne.id);
+    });
+
+    it('should return all executions when no filter is applied', async () => {
+      const executions = await currentUser.getExecutions({});
+
+      expect(executions.length).toBeGreaterThanOrEqual(3);
+
+      expect(executions.some((e) => e.id === executionOne.id)).toBe(true);
+      expect(executions.some((e) => e.id === executionTwo.id)).toBe(true);
+      expect(executions.some((e) => e.id === executionThree.id)).toBe(true);
+    });
+
+    it('should include flow and steps in the returned executions', async () => {
+      const step = await createStep({
+        flowId: flow.id,
+        type: 'trigger',
+      });
+
+      const executions = await currentUser.getExecutions({ name: 'Test Flow' });
+
+      expect(executions[0].flow.id).toBe(flow.id);
+      expect(executions[0].flow.steps[0].id).toBe(step.id);
     });
   });
 

@@ -54,7 +54,7 @@ test.describe('Admin Applications', () => {
 
     await adminApplicationSettingsPage.allowUseOnlyPredefinedAuthClients();
     await adminApplicationSettingsPage.saveSettings();
-    await adminApplicationSettingsPage.expectSuccessSnackbarToBeVisible();
+    await adminApplicationSettingsPage.expectOnlyOneSuccessSnackbarToBeVisible();
     await adminApplicationSettingsPage.disallowConnections();
     await adminApplicationSettingsPage.saveSettings();
     await adminApplicationSettingsPage.expectSuccessSnackbarToBeVisible();
@@ -63,7 +63,7 @@ test.describe('Admin Applications', () => {
 
     await adminApplicationSettingsPage.disallowUseOnlyPredefinedAuthClients();
     await adminApplicationSettingsPage.saveSettings();
-    await adminApplicationSettingsPage.expectSuccessSnackbarToBeVisible();
+    await adminApplicationSettingsPage.expectOnlyOneSuccessSnackbarToBeVisible();
     await adminApplicationSettingsPage.allowConnections();
     await adminApplicationSettingsPage.saveSettings();
     await adminApplicationSettingsPage.expectSuccessSnackbarToBeVisible();
@@ -88,6 +88,7 @@ test.describe('Admin Applications', () => {
     await expect(page.url()).toContain(
       '/admin-settings/apps/google-drive/settings'
     );
+    await expect(adminApplicationSettingsPage.pageTitle).toBeVisible();
 
     await expect(
       adminApplicationSettingsPage.useOnlyPredefinedAuthClients
@@ -125,7 +126,7 @@ test.describe('Admin Applications', () => {
       .getByRole('option')
       .filter({ hasText: 'Unnamed' });
 
-    await expect(await existingConnection.count()).toBeGreaterThan(0);
+    await expect.poll(() => existingConnection.count()).toBeGreaterThan(0);
     await expect(newConnectionOption).toBeEnabled();
     await expect(newConnectionOption).toHaveCount(1);
     await expect(newOAuthConnectionOption).toHaveCount(0);
@@ -142,6 +143,7 @@ test.describe('Admin Applications', () => {
 
     await adminApplicationsPage.openApplication('Spotify');
     await expect(page.url()).toContain('/admin-settings/apps/spotify/settings');
+    await expect(adminApplicationSettingsPage.pageTitle).toBeVisible();
 
     await expect(
       adminApplicationSettingsPage.useOnlyPredefinedAuthClients
@@ -152,7 +154,7 @@ test.describe('Admin Applications', () => {
 
     await adminApplicationSettingsPage.allowUseOnlyPredefinedAuthClients();
     await adminApplicationSettingsPage.saveSettings();
-    await adminApplicationSettingsPage.expectSuccessSnackbarToBeVisible();
+    await adminApplicationSettingsPage.expectOnlyOneSuccessSnackbarToBeVisible();
 
     await adminApplicationOAuthClientsPage.openAuthClientsTab();
     await adminApplicationOAuthClientsPage.openFirstAuthClientCreateForm();
@@ -195,7 +197,7 @@ test.describe('Admin Applications', () => {
       .getByRole('option')
       .filter({ hasText: 'Unnamed' });
 
-    await expect(await existingConnection.count()).toBeGreaterThan(0);
+    await expect.poll(() => existingConnection.count()).toBeGreaterThan(0);
     await expect(newConnectionOption).toHaveCount(0);
     await expect(newOAuthConnectionOption).toBeEnabled();
     await expect(newOAuthConnectionOption).toHaveCount(1);
@@ -212,6 +214,7 @@ test.describe('Admin Applications', () => {
 
     await adminApplicationsPage.openApplication('Reddit');
     await expect(page.url()).toContain('/admin-settings/apps/reddit/settings');
+    await expect(adminApplicationSettingsPage.pageTitle).toBeVisible();
 
     await expect(
       adminApplicationSettingsPage.useOnlyPredefinedAuthClients
@@ -263,7 +266,7 @@ test.describe('Admin Applications', () => {
       .getByRole('option')
       .filter({ hasText: 'Unnamed' });
 
-    await expect(await existingConnection.count()).toBeGreaterThan(0);
+    await expect.poll(() => existingConnection.count()).toBeGreaterThan(0);
     await expect(newConnectionOption).toHaveCount(1);
     await expect(newOAuthConnectionOption).toBeEnabled();
     await expect(newOAuthConnectionOption).toHaveCount(1);
@@ -281,9 +284,10 @@ test.describe('Admin Applications', () => {
     await adminApplicationsPage.openApplication('ClickUp');
     await expect(page.url()).toContain('/admin-settings/apps/clickup/settings');
 
+    await expect(adminApplicationSettingsPage.pageTitle).toBeVisible();
     await adminApplicationSettingsPage.disallowConnections();
     await adminApplicationSettingsPage.saveSettings();
-    await adminApplicationSettingsPage.expectSuccessSnackbarToBeVisible();
+    await adminApplicationSettingsPage.expectOnlyOneSuccessSnackbarToBeVisible();
 
     await adminApplicationOAuthClientsPage.openAuthClientsTab();
     await adminApplicationOAuthClientsPage.openFirstAuthClientCreateForm();
@@ -327,7 +331,7 @@ test.describe('Admin Applications', () => {
       .getByRole('option')
       .filter({ hasText: 'Unnamed' });
 
-    await expect(await existingConnection.count()).toBeGreaterThan(0);
+    await expect.poll(() => existingConnection.count()).toBeGreaterThan(0);
     await expect(newConnectionOption).toHaveCount(0);
     await expect(newOAuthConnectionOption).toHaveCount(0);
   });
@@ -345,11 +349,12 @@ test.describe('Admin Applications', () => {
     await expect(page.url()).toContain(
       '/admin-settings/apps/mailchimp/settings'
     );
+    await expect(adminApplicationSettingsPage.pageTitle).toBeVisible();
 
     await adminApplicationSettingsPage.allowUseOnlyPredefinedAuthClients();
     await adminApplicationSettingsPage.disallowConnections();
     await adminApplicationSettingsPage.saveSettings();
-    await adminApplicationSettingsPage.expectSuccessSnackbarToBeVisible();
+    await adminApplicationSettingsPage.expectOnlyOneSuccessSnackbarToBeVisible();
 
     await adminApplicationOAuthClientsPage.openAuthClientsTab();
     await adminApplicationOAuthClientsPage.openFirstAuthClientCreateForm();
@@ -397,7 +402,7 @@ test.describe('Admin Applications', () => {
       .locator('.MuiAutocomplete-noOptions')
       .filter({ hasText: 'No options' });
 
-    await expect(await existingConnection.count()).toBeGreaterThan(0);
+    await expect.poll(() => existingConnection.count()).toBeGreaterThan(0);
     await expect(noConnectionsOption).toHaveCount(0);
     await expect(newConnectionOption).toHaveCount(0);
     await expect(newOAuthConnectionOption).toHaveCount(0);
@@ -411,6 +416,7 @@ test.describe('Admin Applications', () => {
   }) => {
     await adminApplicationsPage.openApplication('RSS');
     await expect(page.url()).toContain('/admin-settings/apps/rss/settings');
+    await expect(adminApplicationSettingsPage.pageTitle).toBeVisible();
 
     await expect(
       adminApplicationSettingsPage.useOnlyPredefinedAuthClients

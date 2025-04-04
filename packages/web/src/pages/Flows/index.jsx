@@ -1,5 +1,3 @@
-import AddIcon from '@mui/icons-material/Add';
-import UploadIcon from '@mui/icons-material/Upload';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
@@ -15,9 +13,8 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import Can from 'components/Can';
+import FlowFilters from 'components/FlowFilters';
 import FlowsButtons from 'components/FlowsButtons';
-import ConditionalIconButton from 'components/ConditionalIconButton';
 import Container from 'components/Container';
 import FlowRow from 'components/FlowRow';
 import Folders from 'components/Folders';
@@ -30,6 +27,7 @@ import * as URLS from 'config/urls';
 import useCurrentUserAbility from 'hooks/useCurrentUserAbility';
 import useFlows from 'hooks/useFlows';
 import useFormatMessage from 'hooks/useFormatMessage';
+import objectifyUrlSearchParams from 'helpers/objectifyUrlSearchParams';
 
 export default function Flows() {
   const formatMessage = useFormatMessage();
@@ -38,47 +36,70 @@ export default function Flows() {
   const page = parseInt(searchParams.get('page') || '', 10) || 1;
   const flowName = searchParams.get('flowName') || '';
   const folderId = searchParams.get('folderId');
+  const status = searchParams.get('status');
+  const onlyOwnedFlows = searchParams.get('onlyOwnedFlows');
   const currentUserAbility = useCurrentUserAbility();
+  const [searchValue, setSearchValue] = React.useState(flowName);
 
-  const { data, isSuccess, isLoading } = useFlows({ flowName, page, folderId });
+  const { data, isSuccess, isLoading } = useFlows({
+    flowName,
+    page,
+    folderId,
+    status,
+    onlyOwnedFlows,
+  });
 
   const flows = data?.data || [];
   const pageInfo = data?.meta;
   const hasFlows = flows?.length;
   const navigateToLastPage = isSuccess && !hasFlows && page > 1;
 
-  const onSearchChange = React.useCallback((event) => {
-    setSearchParams({ flowName: event.target.value });
-  }, []);
+  const onSearchChange = React.useCallback(
+    (event) => {
+      const value = event.target.value;
 
-  const getPathWithSearchParams = (page, flowName) => {
-    const searchParams = new URLSearchParams();
+      setSearchValue(value);
 
-    if (folderId) {
-      searchParams.set('folderId', folderId);
-    }
+      setSearchParams({
+        flowName: value,
+        ...(folderId && { folderId }),
+        ...(onlyOwnedFlows && { onlyOwnedFlows }),
+        ...(status && { status }),
+      });
+    },
+    [folderId, setSearchParams, onlyOwnedFlows, status],
+  );
 
-    if (flowName) {
-      searchParams.set('flowName', flowName);
-    }
+  const getPathWithSearchParams = (page) => {
+    const searchParamsObject = objectifyUrlSearchParams(searchParams);
 
-    if (page > 1) {
-      searchParams.set('page', page);
-    }
+    const newSearchParams = new URLSearchParams({
+      ...searchParamsObject,
+      page,
+    });
 
-    return { search: searchParams.toString() };
+    return { search: newSearchParams.toString() };
   };
 
   const onDuplicateFlow = () => {
     if (pageInfo?.currentPage > 1) {
-      navigate(getPathWithSearchParams(1, flowName));
+      navigate(getPathWithSearchParams(1));
     }
   };
 
   React.useEffect(
+    function resetSearchValue() {
+      if (!searchParams.has('flowName')) {
+        setSearchValue('');
+      }
+    },
+    [searchParams],
+  );
+
+  React.useEffect(
     function redirectToLastPage() {
       if (navigateToLastPage) {
-        navigate(getPathWithSearchParams(pageInfo.totalPages, flowName));
+        navigate(getPathWithSearchParams(pageInfo.totalPages));
       }
     },
     [navigateToLastPage],
@@ -99,7 +120,7 @@ export default function Flows() {
             </Grid>
 
             <Grid item xs={12} md="auto" order={{ xs: 2, md: 1 }}>
-              <SearchInput onChange={onSearchChange} defaultValue={flowName} />
+              <SearchInput onChange={onSearchChange} value={searchValue} />
             </Grid>
 
             <Grid
@@ -127,6 +148,8 @@ export default function Flows() {
             </Grid>
 
             <Grid item xs={12} sm={9}>
+              <FlowFilters />
+
               {(isLoading || navigateToLastPage) && (
                 <CircularProgress
                   sx={{ display: 'block', margin: '20px auto' }}
@@ -162,7 +185,7 @@ export default function Flows() {
                     renderItem={(item) => (
                       <PaginationItem
                         component={Link}
-                        to={getPathWithSearchParams(item.page, flowName)}
+                        to={getPathWithSearchParams(item.page)}
                         {...item}
                       />
                     )}

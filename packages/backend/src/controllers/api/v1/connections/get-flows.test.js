@@ -7,7 +7,7 @@ import { createConnection } from '../../../../../test/factories/connection.js';
 import { createFlow } from '../../../../../test/factories/flow.js';
 import { createStep } from '../../../../../test/factories/step.js';
 import { createPermission } from '../../../../../test/factories/permission.js';
-import getFlowsMock from '../../../../../test/mocks/rest/api/v1/flows/get-flows.js';
+import getFlowsMock from '../../../../../test/mocks/rest/api/v1/connections/get-flows.js';
 
 describe('GET /api/v1/connections/:connectionId/flows', () => {
   let currentUser, currentUserRole, token;
@@ -66,7 +66,8 @@ describe('GET /api/v1/connections/:connectionId/flows', () => {
 
     const expectedPayload = await getFlowsMock(
       [currentUserFlowOne],
-      [triggerStepFlowOne, actionStepFlowOne]
+      [triggerStepFlowOne, actionStepFlowOne],
+      currentUser.id
     );
 
     expect(response.body).toStrictEqual(expectedPayload);
@@ -120,7 +121,8 @@ describe('GET /api/v1/connections/:connectionId/flows', () => {
 
     const expectedPayload = await getFlowsMock(
       [anotherUserFlowOne],
-      [triggerStepFlowOne, actionStepFlowOne]
+      [triggerStepFlowOne, actionStepFlowOne],
+      currentUser.id
     );
 
     expect(response.body).toStrictEqual(expectedPayload);

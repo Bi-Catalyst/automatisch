@@ -40,7 +40,16 @@ export class AdminApplicationSettingsPage extends AuthenticatedPage {
   }
 
   async saveSettings() {
-    await this.saveButton.click();
+    await Promise.all([
+      this.page.waitForResponse(
+        (resp) => resp.url().includes('/config') && resp.status() === 200
+      ),
+      this.saveButton.click(),
+    ]);
+  }
+
+  async expectOnlyOneSuccessSnackbarToBeVisible() {
+    await expect(this.successSnackbar).toBeVisible();
   }
 
   async expectSuccessSnackbarToBeVisible() {
